@@ -9,10 +9,8 @@ import pandas as pd
 
 from src.constants import PLAYERS
 
-
 _DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-_POULE_FILE = _DATA_DIR / "poule_matches.json"
-_MATCH_FILES = (_DATA_DIR / "matches.json", _DATA_DIR / "wedstrijden.json")
+_ALL_MATCHES_FILE = _DATA_DIR / "all_matches.json"
 _ESHG_TEAM = "Don Quishoot H3"
 _OWN_GOAL_LABEL = "Eigen doelpunt tegenstander"
 _PLAYER_STAT_COLUMNS = [
@@ -30,44 +28,40 @@ _PLAYER_STAT_COLUMNS = [
 def _load_json_records(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
-
     try:
         with path.open("r", encoding="utf-8") as file:
             records = json.load(file)
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"Wedstrijdenbestand kan niet worden gelezen ({path}): {error}") from error
+    return records if isinstance(records, list) else []
 
-    if not isinstance(records, list) or not all(
-        isinstance(record, dict) for record in records
-    ):
-        raise ValueError(f"Wedstrijdenbestand moet een lijst met objecten bevatten: {path}")
-    return records
+
+def get_all_matches() -> list[dict[str, Any]]:
+    """Laad alle competitiewedstrijden rechtstreeks uit all_matches.json."""
+    return _load_json_records(_ALL_MATCHES_FILE)
 
 
 def _get_scoring_matches() -> list[dict[str, Any]]:
-    """Load scoring matches, preferring matches.json for duplicate match IDs."""
-    matches_by_id: dict[str, dict[str, Any]] = {}
-    matches_without_id: list[dict[str, Any]] = []
-    for path in reversed(_MATCH_FILES):
-        for index, match in enumerate(_load_json_records(path)):
-            match_id = str(match.get("match_id", "")).strip()
-            if match_id:
-                matches_by_id[match_id] = match
-            else:
-                matches_without_id.append(match)
-    matches = [*matches_without_id, *matches_by_id.values()]
-    completed_matches = []
-    for match in matches:
-        if match.get("gespeeld") is False:
+    """Laad alle gespeelde wedstrijden van ESHG inclusief doelpunten en details."""
+    completed = []
+    for match in get_all_matches():
+        if not match.get("gespeeld"):
             continue
-        match_date = _normalize_date(match.get("datum"))
-        try:
-            if match_date and date.fromisoformat(match_date) > date.today():
-                continue
-        except ValueError:
-            continue
-        completed_matches.append(match)
-    return completed_matches
+        home = _team_key(str(match.get("thuis", "")))
+        away = _team_key(str(match.get("uit", "")))
+        if _team_key(_ESHG_TEAM) in (home, away):
+            completed.append(match)
+    return completed
+
+
+def _match_has_result(match: dict[str, Any]) -> bool:
+    """Controleert of een wedstrijd gespeeld is en een geldige uitslag heeft."""
+    if not match.get("gespeeld"):
+        return False
+    return (
+        _score(match.get("score_thuis")) is not None
+        and _score(match.get("score_uit")) is not None
+    )
 
 
 def _goal_records(match: dict[str, Any]) -> list[dict[str, Any]]:
@@ -89,6 +83,49 @@ def _empty_player_stats() -> dict[str, int]:
         "Strafballen": 0,
         "Assists": 0,
     }
+
+
+def _normalize_date(value: object) -> str:
+    if value is None:
+        return ""
+    date_text = str(value).strip()
+    if not date_text:
+        return ""
+
+    for date_format in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(date_text, date_format).date().isoformat()
+        except ValueError:
+            continue
+    return date_text
+
+
+def _team_key(team: str) -> str:
+    return " ".join(team.split()).casefold()
+
+
+def _score(value: object) -> int | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        score = int(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if score < 0:
+        return None
+    if isinstance(value, float) and not value.is_integer():
+        return None
+    return score
+
+
+def _valid_played_score(match: dict) -> tuple[int, int] | None:
+    if match.get("gespeeld") is not True:
+        return None
+    home_score = _score(match.get("score_thuis"))
+    away_score = _score(match.get("score_uit"))
+    if home_score is None or away_score is None:
+        return None
+    return home_score, away_score
 
 
 def calculate_player_stats() -> pd.DataFrame:
@@ -182,10 +219,10 @@ def get_player_match_timeline(player: str) -> pd.DataFrame:
 
         opponent = _person_name(match.get("tegenstander"))
         if not opponent:
-            opponent = (
-                f"{_person_name(match.get('thuis'))} - "
-                f"{_person_name(match.get('uit'))}"
-            ).strip(" -")
+            home = str(match.get("thuis", "")).strip()
+            away = str(match.get("uit", "")).strip()
+            opponent = away if _team_key(home) == _team_key(_ESHG_TEAM) else home
+
         involvement = []
         if player_goals:
             involvement.append("Goal" if player_goals == 1 else f"{player_goals} goals")
@@ -208,213 +245,6 @@ def get_player_match_timeline(player: str) -> pd.DataFrame:
         timeline,
         columns=["Datum", "Tegenstander", "Bijdrage", "Goals", "Assists"],
     )
-
-
-def _normalize_date(value: object) -> str:
-    if value is None:
-        return ""
-    date_text = str(value).strip()
-    if not date_text:
-        return ""
-
-    for date_format in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
-        try:
-            return datetime.strptime(date_text, date_format).date().isoformat()
-        except ValueError:
-            continue
-    return date_text
-
-
-def _team_key(team: str) -> str:
-    return " ".join(team.split()).casefold()
-
-
-def _score(value: object) -> int | None:
-    if value is None or isinstance(value, bool):
-        return None
-    try:
-        score = int(value)
-    except (TypeError, ValueError, OverflowError):
-        return None
-    if score < 0:
-        return None
-    if isinstance(value, float) and not value.is_integer():
-        return None
-    return score
-
-
-def _fixture_key(match: dict[str, Any]) -> tuple[str, str, str]:
-    teams = sorted((_team_key(match["thuis"]), _team_key(match["uit"])))
-    return _normalize_date(match["datum"]), teams[0], teams[1]
-
-
-def _local_result(record: dict[str, Any]) -> tuple[str, str, int, int] | None:
-    """Return date, opponent, ESHG score, and opponent score for a local match."""
-    match_date = _normalize_date(record.get("datum"))
-    if not match_date:
-        return None
-    try:
-        if date.fromisoformat(match_date) > date.today():
-            return None
-    except ValueError:
-        return None
-    if record.get("gespeeld") is False:
-        return None
-
-    home = str(record.get("thuis", "")).strip()
-    away = str(record.get("uit", "")).strip()
-    if home and away:
-        if _team_key(home) == _team_key(_ESHG_TEAM):
-            opponent = away
-            home_score = _score(record.get("score_thuis"))
-            away_score = _score(record.get("score_uit"))
-            if home_score is not None and away_score is not None:
-                return match_date, opponent, home_score, away_score
-        elif _team_key(away) == _team_key(_ESHG_TEAM):
-            opponent = home
-            home_score = _score(record.get("score_thuis"))
-            away_score = _score(record.get("score_uit"))
-            if home_score is not None and away_score is not None:
-                return match_date, opponent, away_score, home_score
-        return None
-
-    opponent = str(record.get("tegenstander", "")).strip()
-    if not opponent:
-        return None
-
-    score_data = record.get("score")
-    score_data = score_data if isinstance(score_data, dict) else {}
-    eshg_score = _score(score_data.get("eshg", record.get("score_eshg")))
-    opponent_score = _score(
-        score_data.get("tegenstander", record.get("score_tegenstander"))
-    )
-    if eshg_score is None or opponent_score is None:
-        return None
-    return match_date, opponent, eshg_score, opponent_score
-
-
-def _standardize_poule_match(record: dict[str, Any]) -> dict[str, Any] | None:
-    match_date = _normalize_date(record.get("datum"))
-    home = str(record.get("thuis", "")).strip()
-    away = str(record.get("uit", "")).strip()
-    if not match_date or not home or not away:
-        return None
-
-    home_score = _score(record.get("score_thuis"))
-    away_score = _score(record.get("score_uit"))
-    try:
-        date_is_past_or_today = date.fromisoformat(match_date) <= date.today()
-    except ValueError:
-        date_is_past_or_today = False
-    played = (
-        record.get("gespeeld") is True
-        and date_is_past_or_today
-        and home_score is not None
-        and away_score is not None
-    )
-    match = {
-        "datum": match_date,
-        "thuis": home,
-        "uit": away,
-        "score_thuis": home_score if played else None,
-        "score_uit": away_score if played else None,
-        "gespeeld": played,
-    }
-    if "ronde" in record:
-        match["ronde"] = record["ronde"]
-    return match
-
-
-def get_all_matches() -> list[dict]:
-    """Load and merge scheduled pool fixtures with ESHG match results."""
-    poule_records = _load_json_records(_POULE_FILE)
-    matches_by_fixture: dict[tuple[str, str, str], dict[str, Any]] = {}
-    for record in poule_records:
-        match = _standardize_poule_match(record)
-        if match is None:
-            continue
-
-        fixture_key = _fixture_key(match)
-        previous = matches_by_fixture.get(fixture_key)
-        if previous is None or (
-            not previous["gespeeld"] and match["gespeeld"]
-        ):
-            matches_by_fixture[fixture_key] = match
-
-    local_results: dict[tuple[str, str], tuple[int, int]] = {}
-    local_fixtures: dict[tuple[str, str, str], dict[str, Any]] = {}
-    # Prefer matches.json over the legacy wedstrijden.json when both contain a fixture.
-    for path in reversed(_MATCH_FILES):
-        for record in _load_json_records(path):
-            result = _local_result(record)
-            if result is None:
-                continue
-            match_date, opponent, eshg_score, opponent_score = result
-            local_results[(match_date, _team_key(opponent))] = (
-                eshg_score,
-                opponent_score,
-            )
-
-            location = str(record.get("locatie", "")).strip().casefold()
-            if location == "uit":
-                home, away = opponent, _ESHG_TEAM
-                home_score, away_score = opponent_score, eshg_score
-            elif location == "thuis":
-                home, away = _ESHG_TEAM, opponent
-                home_score, away_score = eshg_score, opponent_score
-            else:
-                # If location is not stored, use the matching scheduled fixture's orientation.
-                scheduled = matches_by_fixture.get(
-                    (
-                        match_date,
-                        *sorted((_team_key(_ESHG_TEAM), _team_key(opponent))),
-                    )
-                )
-                if scheduled and _team_key(scheduled["thuis"]) == _team_key(_ESHG_TEAM):
-                    home, away = _ESHG_TEAM, opponent
-                    home_score, away_score = eshg_score, opponent_score
-                else:
-                    home, away = opponent, _ESHG_TEAM
-                    home_score, away_score = opponent_score, eshg_score
-
-            local_match = {
-                "datum": match_date,
-                "thuis": home,
-                "uit": away,
-                "score_thuis": home_score,
-                "score_uit": away_score,
-                "gespeeld": True,
-            }
-            local_fixtures[_fixture_key(local_match)] = local_match
-
-    for fixture_key, match in matches_by_fixture.items():
-        if _team_key(_ESHG_TEAM) not in (
-            _team_key(match["thuis"]),
-            _team_key(match["uit"]),
-        ):
-            continue
-        opponent = (
-            match["uit"]
-            if _team_key(match["thuis"]) == _team_key(_ESHG_TEAM)
-            else match["thuis"]
-        )
-        result = local_results.get(
-            (_normalize_date(match["datum"]), _team_key(opponent))
-        )
-        if result is None:
-            continue
-
-        eshg_score, opponent_score = result
-        if _team_key(match["thuis"]) == _team_key(_ESHG_TEAM):
-            match["score_thuis"], match["score_uit"] = eshg_score, opponent_score
-        else:
-            match["score_thuis"], match["score_uit"] = opponent_score, eshg_score
-        match["gespeeld"] = True
-
-    for fixture_key, local_match in local_fixtures.items():
-        matches_by_fixture.setdefault(fixture_key, local_match)
-
-    return list(matches_by_fixture.values())
 
 
 def get_opponents_by_schedule(opponents: list[str]) -> list[str]:
@@ -453,16 +283,6 @@ def get_opponents_by_schedule(opponents: list[str]) -> list[str]:
     ]
 
 
-def _valid_played_score(match: dict) -> tuple[int, int] | None:
-    if match.get("gespeeld") is not True:
-        return None
-    home_score = _score(match.get("score_thuis"))
-    away_score = _score(match.get("score_uit"))
-    if home_score is None or away_score is None:
-        return None
-    return home_score, away_score
-
-
 def _team_match_result(
     match: dict[str, Any], team: str
 ) -> dict[str, Any] | None:
@@ -498,48 +318,21 @@ def _team_match_result(
         "doelpunten_voor": goals_for,
         "doelpunten_tegen": goals_against,
         "resultaat": result,
+        "notities": match.get("notities", {}),
+        "extra_stats": match.get("extra_stats", {}),
     }
-
-
-def _local_match_details() -> dict[tuple[str, str], dict[str, Any]]:
-    details: dict[tuple[str, str], dict[str, Any]] = {}
-    # matches.json takes precedence over the legacy wedstrijden.json.
-    for path in reversed(_MATCH_FILES):
-        for record in _load_json_records(path):
-            result = _local_result(record)
-            if result is None:
-                continue
-            match_date, opponent, _, _ = result
-            details[(match_date, _team_key(opponent))] = {
-                "notities": (
-                    record.get("notities")
-                    if isinstance(record.get("notities"), dict)
-                    else {}
-                ),
-                "extra_stats": (
-                    record.get("extra_stats")
-                    if isinstance(record.get("extra_stats"), dict)
-                    else {}
-                ),
-            }
-    return details
 
 
 def get_head_to_head(opponent: str) -> dict[str, Any]:
     """Return ESHG's played results and saved notes against an opponent."""
     opponent_key = _team_key(opponent)
-    match_details = _local_match_details()
     meetings: list[dict[str, Any]] = []
 
     for match in get_all_matches():
         eshg_result = _team_match_result(match, _ESHG_TEAM)
         if eshg_result is None or _team_key(eshg_result["tegenstander"]) != opponent_key:
             continue
-
-        details = match_details.get(
-            (eshg_result["datum"], opponent_key), {}
-        )
-        meetings.append({**eshg_result, **details})
+        meetings.append(eshg_result)
 
     meetings.sort(key=lambda meeting: meeting["datum"])
     wins = sum(meeting["resultaat"] == "W" for meeting in meetings)
@@ -916,14 +709,12 @@ def run_monte_carlo_simulation(
     )
 
     if model_type == "aangepast":
-        # 1. Bereken ELO-ratings van alle teams
         elo_df = calculate_elo_ratings(matches)
         elo_dict = {
             _team_key(str(row["Team"])): float(row["ELO Rating"])
             for _, row in elo_df.iterrows()
         }
 
-        # 2. Bayesian shrinkage naar het competitiegemiddelde (prior M = 4 wedstrijden)
         PRIOR_WEIGHT = 4
         league_avg = fallback_for
 
@@ -937,26 +728,22 @@ def run_monte_carlo_simulation(
             avg_against = (ga + PRIOR_WEIGHT * league_avg) / (n_played + PRIOR_WEIGHT)
             shrunk_averages[team_key] = (avg_for, avg_against)
 
-        # 3. Bereken verwachte doelpunten per wedstrijd met ELO-correctie (zonder thuisvoordeel)
         expected_goals = []
         for match in remaining_matches:
             home_key = match["thuis"]
             away_key = match["uit"]
 
-            # Basis lambda op basis van gescoorde en geïncasseerde doelpunten
             base_home = (shrunk_averages[home_key][0] * shrunk_averages[away_key][1]) / league_avg
             base_away = (shrunk_averages[away_key][0] * shrunk_averages[home_key][1]) / league_avg
 
-            # ELO invloed: 100 ELO rating verschil = ~0.25 doelpunt verschuiving
             elo_diff = elo_dict.get(home_key, 1500.0) - elo_dict.get(away_key, 1500.0)
-            elo_shift = (elo_diff / 400.0)
+            elo_shift = elo_diff / 400.0
 
             lambda_home = max(0.2, base_home + elo_shift)
             lambda_away = max(0.2, base_away - elo_shift)
             expected_goals.append((lambda_home, lambda_away))
 
     else:
-        # Huidige standaard berekening
         averages = {
             team_key: (
                 sum(team_goals_for[team_key]) / len(team_goals_for[team_key])
@@ -1131,6 +918,7 @@ def run_monte_carlo_simulation(
         "positie_distributie": target_distribution,
     }
 
+
 def simulate_standings(simulated_matches: list[dict]) -> pd.DataFrame:
     """Return standings after temporarily applying the simulated match results."""
     matches = get_all_matches()
@@ -1153,16 +941,6 @@ def simulate_standings(simulated_matches: list[dict]) -> pd.DataFrame:
         axis=1,
     ).astype("Int64")
     return virtual_standings
-
-
-def _match_has_result(match: dict[str, Any]) -> bool:
-    score = match.get("score")
-    if not isinstance(score, dict):
-        return False
-    return (
-        _score(score.get("eshg")) is not None
-        and _score(score.get("tegenstander")) is not None
-    )
 
 
 def get_quarter_stats() -> pd.DataFrame:
