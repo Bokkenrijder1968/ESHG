@@ -1,0 +1,1076 @@
+[
+  {
+    "match_id": "poule_0_2026-10-18_Helmond_H4_Drunen_H3",
+    "datum": "2026-10-18",
+    "thuis": "Helmond H4",
+    "uit": "Drunen H3",
+    "score_thuis": 1,
+    "score_uit": 2,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_1_2026-10-18_Shot_H2-O_Den_Bosch_H5",
+    "datum": "2026-10-18",
+    "thuis": "Shot H2-O",
+    "uit": "Den Bosch H5",
+    "score_thuis": 4,
+    "score_uit": 0,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_2_2026-10-11_Were_Di_H4_Geel-Zwart_H2-O",
+    "datum": "2026-10-11",
+    "thuis": "Were Di H4",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": 2,
+    "score_uit": 8,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_3_2026-10-11_Shot_H2-O_Were_Di_H5",
+    "datum": "2026-10-11",
+    "thuis": "Shot H2-O",
+    "uit": "Were Di H5",
+    "score_thuis": 0,
+    "score_uit": 6,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_4_2026-10-11_Drunen_H3_Hopbel_H2-O",
+    "datum": "2026-10-11",
+    "thuis": "Drunen H3",
+    "uit": "Hopbel H2-O",
+    "score_thuis": 1,
+    "score_uit": 3,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_5_2026-10-11_Den_Bosch_H5_Helmond_H4",
+    "datum": "2026-10-11",
+    "thuis": "Den Bosch H5",
+    "uit": "Helmond H4",
+    "score_thuis": 4,
+    "score_uit": 3,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_6_2026-10-04_Were_Di_H5_Den_Bosch_H5",
+    "datum": "2026-10-04",
+    "thuis": "Were Di H5",
+    "uit": "Den Bosch H5",
+    "score_thuis": 3,
+    "score_uit": 0,
+    "ronde": 5,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_7_2026-10-04_Warande_H3_Shot_H2-O",
+    "datum": "2026-10-04",
+    "thuis": "Warande H3",
+    "uit": "Shot H2-O",
+    "score_thuis": 2,
+    "score_uit": 2,
+    "ronde": 5,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_8_2026-10-04_Geel-Zwart_H2-O_Drunen_H3",
+    "datum": "2026-10-04",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Drunen H3",
+    "score_thuis": 6,
+    "score_uit": 1,
+    "ronde": 5,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_9_2026-10-04_Helmond_H4_Don_Quishoot_H3",
+    "datum": "2026-10-04",
+    "thuis": "Helmond H4",
+    "uit": "Don Quishoot H3",
+    "score_thuis": 2,
+    "score_uit": 8,
+    "ronde": 5,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_10_2026-10-04_Push_H4_Were_Di_H4",
+    "datum": "2026-10-04",
+    "thuis": "Push H4",
+    "uit": "Were Di H4",
+    "score_thuis": 1,
+    "score_uit": 0,
+    "ronde": 5,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_11_2026-09-30_Don_Quishoot_H3_Were_Di_H5",
+    "datum": "2026-09-30",
+    "thuis": "Don Quishoot H3",
+    "uit": "Were Di H5",
+    "score_thuis": 0,
+    "score_uit": 1,
+    "ronde": 4,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_12_2026-09-27_Shot_H2-O_Hopbel_H2-O",
+    "datum": "2026-09-27",
+    "thuis": "Shot H2-O",
+    "uit": "Hopbel H2-O",
+    "score_thuis": 1,
+    "score_uit": 4,
+    "ronde": 4,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_13_2026-09-27_Den_Bosch_H5_Warande_H3",
+    "datum": "2026-09-27",
+    "thuis": "Den Bosch H5",
+    "uit": "Warande H3",
+    "score_thuis": 2,
+    "score_uit": 3,
+    "ronde": 4,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_14_2026-09-27_Geel-Zwart_H2-O_Push_H4",
+    "datum": "2026-09-27",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Push H4",
+    "score_thuis": 3,
+    "score_uit": 4,
+    "ronde": 4,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_15_2026-09-21_Were_Di_H4_Helmond_H4",
+    "datum": "2026-09-21",
+    "thuis": "Were Di H4",
+    "uit": "Helmond H4",
+    "score_thuis": 3,
+    "score_uit": 2,
+    "ronde": 4,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_16_2026-09-20_Were_Di_H5_Were_Di_H4",
+    "datum": "2026-09-20",
+    "thuis": "Were Di H5",
+    "uit": "Were Di H4",
+    "score_thuis": 4,
+    "score_uit": 2,
+    "ronde": 3,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_17_2026-09-20_Helmond_H4_Geel-Zwart_H2-O",
+    "datum": "2026-09-20",
+    "thuis": "Helmond H4",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": 1,
+    "score_uit": 17,
+    "ronde": 3,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_18_2026-09-20_Hopbel_H2-O_Den_Bosch_H5",
+    "datum": "2026-09-20",
+    "thuis": "Hopbel H2-O",
+    "uit": "Den Bosch H5",
+    "score_thuis": 3,
+    "score_uit": 1,
+    "ronde": 3,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_19_2026-09-20_Warande_H3_Don_Quishoot_H3",
+    "datum": "2026-09-20",
+    "thuis": "Warande H3",
+    "uit": "Don Quishoot H3",
+    "score_thuis": 2,
+    "score_uit": 1,
+    "ronde": 3,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_20_2026-09-20_Push_H4_Drunen_H3",
+    "datum": "2026-09-20",
+    "thuis": "Push H4",
+    "uit": "Drunen H3",
+    "score_thuis": 1,
+    "score_uit": 3,
+    "ronde": 3,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_21_2026-09-16_Don_Quishoot_H3_Hopbel_H2-O",
+    "datum": "2026-09-16",
+    "thuis": "Don Quishoot H3",
+    "uit": "Hopbel H2-O",
+    "score_thuis": 1,
+    "score_uit": 4,
+    "ronde": 2,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_22_2026-09-13_Were_Di_H4_Warande_H3",
+    "datum": "2026-09-13",
+    "thuis": "Were Di H4",
+    "uit": "Warande H3",
+    "score_thuis": 1,
+    "score_uit": 3,
+    "ronde": 2,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_23_2026-09-13_Geel-Zwart_H2-O_Were_Di_H5",
+    "datum": "2026-09-13",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Were Di H5",
+    "score_thuis": 2,
+    "score_uit": 6,
+    "ronde": 2,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_24_2026-09-13_Drunen_H3_Shot_H2-O",
+    "datum": "2026-09-13",
+    "thuis": "Drunen H3",
+    "uit": "Shot H2-O",
+    "score_thuis": 3,
+    "score_uit": 1,
+    "ronde": 2,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_25_2026-09-13_Push_H4_Helmond_H4",
+    "datum": "2026-09-13",
+    "thuis": "Push H4",
+    "uit": "Helmond H4",
+    "score_thuis": 5,
+    "score_uit": 1,
+    "ronde": 2,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_26_2026-09-06_Warande_H3_Geel-Zwart_H2-O",
+    "datum": "2026-09-06",
+    "thuis": "Warande H3",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": 4,
+    "score_uit": 2,
+    "ronde": 1,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_27_2026-09-06_Hopbel_H2-O_Were_Di_H4",
+    "datum": "2026-09-06",
+    "thuis": "Hopbel H2-O",
+    "uit": "Were Di H4",
+    "score_thuis": 8,
+    "score_uit": 0,
+    "ronde": 1,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_28_2026-09-06_Were_Di_H5_Push_H4",
+    "datum": "2026-09-06",
+    "thuis": "Were Di H5",
+    "uit": "Push H4",
+    "score_thuis": 1,
+    "score_uit": 2,
+    "ronde": 1,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_29_2026-10-25_Don_Quishoot_H3_Push_H4",
+    "datum": "2026-10-25",
+    "thuis": "Don Quishoot H3",
+    "uit": "Push H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 6,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_30_2026-11-01_Geel-Zwart_H2-O_Don_Quishoot_H3",
+    "datum": "2026-11-01",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Don Quishoot H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "gespeeld": false,
+    "ronde": 7
+  },
+  {
+    "match_id": "poule_31_2026-11-08_Don_Quishoot_H3_Were_Di_H4",
+    "datum": "2026-11-08",
+    "thuis": "Don Quishoot H3",
+    "uit": "Were Di H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 8,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_32_2026-11-15_Don_Quishoot_H3_Drunen_H3",
+    "datum": "2026-11-15",
+    "thuis": "Don Quishoot H3",
+    "uit": "Drunen H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 9,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_33_2026-11-22_Den_Bosch_H5_Don_Quishoot_H3",
+    "datum": "2026-11-22",
+    "thuis": "Den Bosch H5",
+    "uit": "Don Quishoot H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 10,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_34_2027-02-28_Don_Quishoot_H3_Shot_H2-O",
+    "datum": "2027-02-28",
+    "thuis": "Don Quishoot H3",
+    "uit": "Shot H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 11,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_35_2027-03-14_Hopbel_H2-O_Don_Quishoot_H3",
+    "datum": "2027-03-14",
+    "thuis": "Hopbel H2-O",
+    "uit": "Don Quishoot H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 13,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_36_2027-03-20_Don_Quishoot_H3_Warande_H3",
+    "datum": "2027-03-21",
+    "thuis": "Don Quishoot H3",
+    "uit": "Warande H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 14,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_37_2027-04-04_Were_Di_H5_Don_Quishoot_H3",
+    "datum": "2027-04-04",
+    "thuis": "Were Di H5",
+    "uit": "Don Quishoot H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 15,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_39_2027-04-18_Push_H4_Don_Quishoot_H3",
+    "datum": "2027-04-18",
+    "thuis": "Push H4",
+    "uit": "Don Quishoot H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 17,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_40_2027-05-08_Don_Quishoot_H3_Geel-Zwart_H2-O",
+    "datum": "2027-05-08",
+    "thuis": "Don Quishoot H3",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 18,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_41_2027-05-23_Were_Di_H4_Don_Quishoot_H3",
+    "datum": "2027-05-23",
+    "thuis": "Were Di H4",
+    "uit": "Don Quishoot H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 19,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_42_2027-05-30_Drunen_H3_Don_Quishoot_H3",
+    "datum": "2027-05-30",
+    "thuis": "Drunen H3",
+    "uit": "Don Quishoot H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 20,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_44_2027-06-13_Shot_H2-O_Don_Quishoot_H3",
+    "datum": "2027-06-13",
+    "thuis": "Shot H2-O",
+    "uit": "Don Quishoot H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 22,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_7_2026-11-01_Helmond_H4_Shot_H2-O",
+    "datum": "2026-11-01",
+    "thuis": "Helmond H4",
+    "uit": "Shot H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 7,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_7_2026-11-01_Push_H4_Den_Bosch_H5",
+    "datum": "2026-11-01",
+    "thuis": "Push H4",
+    "uit": "Den Bosch H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 7,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_7_2026-11-01_Were_Di_H4_Drunen_H3",
+    "datum": "2026-11-01",
+    "thuis": "Were Di H4",
+    "uit": "Drunen H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 7,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_7_2026-11-01_Warande_H3_Hopbel_H2-O",
+    "datum": "2026-11-01",
+    "thuis": "Warande H3",
+    "uit": "Hopbel H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 7,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_8_2026-11-08_Shot_H2-O_Push_H4",
+    "datum": "2026-11-08",
+    "thuis": "Shot H2-O",
+    "uit": "Push H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 8,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_8_2026-11-08_Hopbel_H2-O_Were_Di_H5",
+    "datum": "2026-11-08",
+    "thuis": "Hopbel H2-O",
+    "uit": "Were Di H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 8,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_8_2026-11-08_Drunen_H3_Warande_H3",
+    "datum": "2026-11-08",
+    "thuis": "Drunen H3",
+    "uit": "Warande H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 8,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_8_2026-11-08_Den_Bosch_H5_Geel-Zwart_H2-O",
+    "datum": "2026-11-08",
+    "thuis": "Den Bosch H5",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 8,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_9_2026-11-15_Helmond_H4_Hopbel_H2-O",
+    "datum": "2026-11-15",
+    "thuis": "Helmond H4",
+    "uit": "Hopbel H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 9,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_9_2026-11-15_Geel-Zwart_H2-O_Shot_H2-O",
+    "datum": "2026-11-15",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Shot H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 9,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_9_2026-11-15_Were_Di_H5_Warande_H3",
+    "datum": "2026-11-15",
+    "thuis": "Were Di H5",
+    "uit": "Warande H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 9,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_9_2026-11-15_Were_Di_H4_Den_Bosch_H5",
+    "datum": "2026-11-15",
+    "thuis": "Were Di H4",
+    "uit": "Den Bosch H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 9,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_10_2026-11-22_Warande_H3_Helmond_H4",
+    "datum": "2026-11-22",
+    "thuis": "Warande H3",
+    "uit": "Helmond H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 10,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_10_2026-11-22_Hopbel_H2-O_Push_H4",
+    "datum": "2026-11-22",
+    "thuis": "Hopbel H2-O",
+    "uit": "Push H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 10,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_10_2026-11-22_Were_Di_H5_Drunen_H3",
+    "datum": "2026-11-22",
+    "thuis": "Were Di H5",
+    "uit": "Drunen H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 10,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_10_2026-11-22_Shot_H2-O_Were_Di_H4",
+    "datum": "2026-11-22",
+    "thuis": "Shot H2-O",
+    "uit": "Were Di H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 10,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_11_2027-02-28_Geel-Zwart_H2-O_Hopbel_H2-O",
+    "datum": "2027-02-28",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Hopbel H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 11,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_11_2027-02-28_Drunen_H3_Den_Bosch_H5",
+    "datum": "2027-02-28",
+    "thuis": "Drunen H3",
+    "uit": "Den Bosch H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 11,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_11_2027-02-28_Push_H4_Warande_H3",
+    "datum": "2027-02-28",
+    "thuis": "Push H4",
+    "uit": "Warande H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 11,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_11_2027-02-28_Helmond_H4_Were_Di_H5",
+    "datum": "2027-02-28",
+    "thuis": "Helmond H4",
+    "uit": "Were Di H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 11,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_12_2027-03-07_Geel-Zwart_H2-O_Warande_H3",
+    "datum": "2027-03-07",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Warande H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 12,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_12_2027-03-07_Drunen_H3_Helmond_H4",
+    "datum": "2027-03-07",
+    "thuis": "Drunen H3",
+    "uit": "Helmond H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 12,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_12_2027-03-07_Were_Di_H4_Hopbel_H2-O",
+    "datum": "2027-03-07",
+    "thuis": "Were Di H4",
+    "uit": "Hopbel H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 12,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_12_2027-03-07_Push_H4_Were_Di_H5",
+    "datum": "2027-03-07",
+    "thuis": "Push H4",
+    "uit": "Were Di H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 12,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_12_2027-03-07_Den_Bosch_H5_Shot_H2-O",
+    "datum": "2027-03-07",
+    "thuis": "Den Bosch H5",
+    "uit": "Shot H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 12,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_13_2027-03-14_Shot_H2-O_Drunen_H3",
+    "datum": "2027-03-14",
+    "thuis": "Shot H2-O",
+    "uit": "Drunen H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 13,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_13_2027-03-14_Warande_H3_Were_Di_H4",
+    "datum": "2027-03-14",
+    "thuis": "Warande H3",
+    "uit": "Were Di H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 13,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_13_2027-03-14_Helmond_H4_Push_H4",
+    "datum": "2027-03-14",
+    "thuis": "Helmond H4",
+    "uit": "Push H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 13,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_13_2027-03-14_Were_Di_H5_Geel-Zwart_H2-O",
+    "datum": "2027-03-14",
+    "thuis": "Were Di H5",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 13,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_14_2027-03-21_Geel-Zwart_H2-O_Helmond_H4",
+    "datum": "2027-03-21",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Helmond H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 14,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_14_2027-03-21_Drunen_H3_Push_H4",
+    "datum": "2027-03-21",
+    "thuis": "Drunen H3",
+    "uit": "Push H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 14,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_14_2027-03-21_Were_Di_H4_Were_Di_H5",
+    "datum": "2027-03-21",
+    "thuis": "Were Di H4",
+    "uit": "Were Di H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 14,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_14_2027-03-21_Den_Bosch_H5_Hopbel_H2-O",
+    "datum": "2027-03-21",
+    "thuis": "Den Bosch H5",
+    "uit": "Hopbel H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 14,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_15_2027-04-04_Hopbel_H2-O_Shot_H2-O",
+    "datum": "2027-04-04",
+    "thuis": "Hopbel H2-O",
+    "uit": "Shot H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 15,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_15_2027-04-04_Warande_H3_Den_Bosch_H5",
+    "datum": "2027-04-04",
+    "thuis": "Warande H3",
+    "uit": "Den Bosch H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 15,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_15_2027-04-04_Push_H4_Geel-Zwart_H2-O",
+    "datum": "2027-04-04",
+    "thuis": "Push H4",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 15,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_15_2027-04-04_Helmond_H4_Were_Di_H4",
+    "datum": "2027-04-04",
+    "thuis": "Helmond H4",
+    "uit": "Were Di H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 15,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_16_2027-04-11_Shot_H2-O_Warande_H3",
+    "datum": "2027-04-11",
+    "thuis": "Shot H2-O",
+    "uit": "Warande H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 16,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_16_2027-04-11_Drunen_H3_Geel-Zwart_H2-O",
+    "datum": "2027-04-11",
+    "thuis": "Drunen H3",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 16,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_16_2027-04-11_Were_Di_H4_Push_H4",
+    "datum": "2027-04-11",
+    "thuis": "Were Di H4",
+    "uit": "Push H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 16,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_16_2027-04-11_Den_Bosch_H5_Were_Di_H5",
+    "datum": "2027-04-11",
+    "thuis": "Den Bosch H5",
+    "uit": "Were Di H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 16,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_17_2027-04-18_Hopbel_H2-O_Drunen_H3",
+    "datum": "2027-04-18",
+    "thuis": "Hopbel H2-O",
+    "uit": "Drunen H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 17,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_17_2027-04-18_Geel-Zwart_H2-O_Were_Di_H4",
+    "datum": "2027-04-18",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Were Di H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 17,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_17_2027-04-18_Helmond_H4_Den_Bosch_H5",
+    "datum": "2027-04-18",
+    "thuis": "Helmond H4",
+    "uit": "Den Bosch H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 17,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_17_2027-04-18_Were_Di_H5_Shot_H2-O",
+    "datum": "2027-04-18",
+    "thuis": "Were Di H5",
+    "uit": "Shot H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 17,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_18_2027-05-09_Hopbel_H2-O_Warande_H3",
+    "datum": "2027-05-09",
+    "thuis": "Hopbel H2-O",
+    "uit": "Warande H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 18,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_18_2027-05-09_Shot_H2-O_Helmond_H4",
+    "datum": "2027-05-09",
+    "thuis": "Shot H2-O",
+    "uit": "Helmond H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 18,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_18_2027-05-09_Drunen_H3_Were_Di_H4",
+    "datum": "2027-05-09",
+    "thuis": "Drunen H3",
+    "uit": "Were Di H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 18,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_18_2027-05-09_Den_Bosch_H5_Push_H4",
+    "datum": "2027-05-09",
+    "thuis": "Den Bosch H5",
+    "uit": "Push H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 18,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_19_2027-05-23_Geel-Zwart_H2-O_Den_Bosch_H5",
+    "datum": "2027-05-23",
+    "thuis": "Geel-Zwart H2-O",
+    "uit": "Den Bosch H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 19,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_19_2027-05-23_Warande_H3_Drunen_H3",
+    "datum": "2027-05-23",
+    "thuis": "Warande H3",
+    "uit": "Drunen H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 19,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_19_2027-05-23_Push_H4_Shot_H2-O",
+    "datum": "2027-05-23",
+    "thuis": "Push H4",
+    "uit": "Shot H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 19,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_19_2027-05-23_Were_Di_H5_Hopbel_H2-O",
+    "datum": "2027-05-23",
+    "thuis": "Were Di H5",
+    "uit": "Hopbel H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 19,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_20_2027-05-30_Shot_H2-O_Geel-Zwart_H2-O",
+    "datum": "2027-05-30",
+    "thuis": "Shot H2-O",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 20,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_20_2027-05-30_Hopbel_H2-O_Helmond_H4",
+    "datum": "2027-05-30",
+    "thuis": "Hopbel H2-O",
+    "uit": "Helmond H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 20,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_20_2027-05-30_Warande_H3_Were_Di_H5",
+    "datum": "2027-05-30",
+    "thuis": "Warande H3",
+    "uit": "Were Di H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 20,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_20_2027-05-30_Den_Bosch_H5_Were_Di_H4",
+    "datum": "2027-05-30",
+    "thuis": "Den Bosch H5",
+    "uit": "Were Di H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 20,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_21_2027-06-06_Drunen_H3_Were_Di_H5",
+    "datum": "2027-06-06",
+    "thuis": "Drunen H3",
+    "uit": "Were Di H5",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 21,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_21_2027-06-06_Were_Di_H4_Shot_H2-O",
+    "datum": "2027-06-06",
+    "thuis": "Were Di H4",
+    "uit": "Shot H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 21,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_21_2027-06-06_Push_H4_Hopbel_H2-O",
+    "datum": "2027-06-06",
+    "thuis": "Push H4",
+    "uit": "Hopbel H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 21,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_21_2027-06-06_Helmond_H4_Warande_H3",
+    "datum": "2027-06-06",
+    "thuis": "Helmond H4",
+    "uit": "Warande H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 21,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_22_2027-06-13_Hopbel_H2-O_Geel-Zwart_H2-O",
+    "datum": "2027-06-13",
+    "thuis": "Hopbel H2-O",
+    "uit": "Geel-Zwart H2-O",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 22,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_22_2027-06-13_Warande_H3_Push_H4",
+    "datum": "2027-06-13",
+    "thuis": "Warande H3",
+    "uit": "Push H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 22,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_22_2027-06-13_Den_Bosch_H5_Drunen_H3",
+    "datum": "2027-06-13",
+    "thuis": "Den Bosch H5",
+    "uit": "Drunen H3",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 22,
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_22_2027-06-13_Were_Di_H5_Helmond_H4",
+    "datum": "2027-06-13",
+    "thuis": "Were Di H5",
+    "uit": "Helmond H4",
+    "score_thuis": null,
+    "score_uit": null,
+    "ronde": 22,
+    "gespeeld": false
+  }
+]

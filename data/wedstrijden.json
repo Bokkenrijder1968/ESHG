@@ -1,0 +1,637 @@
+[
+  {
+    "match_id": "2026-10-25_Push_H4",
+    "ronde": 6,
+    "datum": "2026-10-25",
+    "tegenstander": "Push H4",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 2,
+      "tegenstander": 2
+    },
+    "resultaat": "G",
+    "punten": 1,
+    "kwarten": {
+      "eshg": [
+        1,
+        0,
+        1,
+        0
+      ],
+      "tegenstander": [
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "goals": [
+      {
+        "maker": "Dobby",
+        "assist": "Tito",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Padt",
+        "assist": null,
+        "type": "Strafcorner"
+      }
+    ],
+    "corners": {
+      "voor_totaal": 3,
+      "voor_gescoord": 1,
+      "tegen_totaal": 2,
+      "tegen_gescoord": 0
+    },
+    "notities": {
+      "tactiek": "Fysiek spel, veel dreigen met slagen. Makkelijk onder druk te zetten. 1 middenvelder zakt ver terug bij rondspelen achter in de kom, soms even met 5 man, links of rechtsachter stapt dan omhoog",
+      "evaluatie": "Wedstrijd met 11 man, vooral veel aanvallers. Hadden er meer uit moeten halen, waren de bovenliggende partij, konden makkelijk om ze heen spelen, werd goed samengespeeld vanuit ons, niet te veel persoonlijke acties"
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    },
+    "kwarten_bijgehouden": true,
+    "corners_bijgehouden": true,
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_2026-09-16_Hopbel_H2-O",
+    "ronde": 2,
+    "datum": "2026-09-16",
+    "tegenstander": "Hopbel H2-O",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 1,
+      "tegenstander": 4
+    },
+    "resultaat": "V",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [
+      {
+        "maker": "Maarten",
+        "assist": "Tibbe",
+        "type": "Veldgoal"
+      }
+    ],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": "Nog slecht op elkaar ingespeeld, kansloze wedstrijd"
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    },
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_2026-09-20_Warande_H3",
+    "ronde": 3,
+    "datum": "2026-09-20",
+    "tegenstander": "Warande H3",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 1,
+      "tegenstander": 2
+    },
+    "resultaat": "V",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [
+      {
+        "maker": "Tito",
+        "assist": "Maarten",
+        "type": "Veldgoal"
+      }
+    ],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": "Begin met 10 man, daarna met 11. Sterke wedstrijd, erg goed samenspel, helaas op conditie zonder wissels moeten afleggen"
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    },
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_2026-09-30_Were_Di_H5",
+    "ronde": 4,
+    "datum": "2026-09-30",
+    "tegenstander": "Were Di H5",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 1
+    },
+    "resultaat": "V",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "notities": {
+      "tactiek": "Draaien veel door in de verdediging, van 4 mans kom naar 3, terug naar 5",
+      "evaluatie": "Met 16 spelers, maar samenspel ging minder. Goed dichtgehouden achterin, voorin niet veel mogelijkheden. Zeer spannende wedstrijd"
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    },
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_2026-10-04_Helmond_H4",
+    "ronde": 5,
+    "datum": "2026-10-04",
+    "tegenstander": "Helmond H4",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 8,
+      "tegenstander": 2
+    },
+    "resultaat": "W",
+    "punten": 3,
+    "kwarten_bijgehouden": true,
+    "kwarten": {
+      "eshg": [
+        5,
+        1,
+        0,
+        2
+      ],
+      "tegenstander": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    "goals": [
+      {
+        "maker": "Joep",
+        "assist": "Schenk",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Kliko",
+        "assist": null,
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Dobby",
+        "assist": "Maarten",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Maarten",
+        "assist": "Joep",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Menno",
+        "assist": null,
+        "type": "Strafcorner"
+      },
+      {
+        "maker": "Marko",
+        "assist": "Maarten",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Marko",
+        "assist": "Padt",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Marko",
+        "assist": null,
+        "type": "Strafcorner"
+      }
+    ],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "notities": {
+      "tactiek": "Laten veel ruimte in de verdediging, zijn niet scherp op de palen",
+      "evaluatie": "Tito in de goal, 11 spelers, maar slechte tegenstander. Voelde als een oefenwedstrijd. Q3 heel slordig, Q4 teruggepakt. Heel veel kansen, relatief weining afgemaakt ondanks de score"
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    },
+    "gespeeld": true
+  },
+  {
+    "match_id": "poule_2026-11-08_Were_Di_H4",
+    "ronde": 8,
+    "datum": "2026-11-08",
+    "tegenstander": "Were Di H4",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    },
+    "gespeeld": false
+  },
+  {
+    "match_id": "poule_2027-06-13_Shot_H2-O",
+    "ronde": 22,
+    "datum": "2027-06-13",
+    "tegenstander": "Shot H2-O",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2026-11-01_Geel-Zwart_H2-O",
+    "ronde": 7,
+    "datum": "2026-11-01",
+    "tegenstander": "Geel-Zwart H2-O",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2026-11-15_Drunen_H3",
+    "ronde": 9,
+    "datum": "2026-11-15",
+    "tegenstander": "Drunen H3",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2026-11-22_Den_Bosch_H5",
+    "ronde": 10,
+    "datum": "2026-11-22",
+    "tegenstander": "Den Bosch H5",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-02-28_Shot_H2-O",
+    "ronde": 11,
+    "datum": "2027-02-28",
+    "tegenstander": "Shot H2-O",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-03-14_Hopbel_H2-O",
+    "ronde": 13,
+    "datum": "2027-03-14",
+    "tegenstander": "Hopbel H2-O",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-03-21_Warande_H3",
+    "ronde": 14,
+    "datum": "2027-03-21",
+    "tegenstander": "Warande H3",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-04-04_Were_Di_H5",
+    "ronde": 15,
+    "datum": "2027-04-04",
+    "tegenstander": "Were Di H5",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-04-10_Helmond_H4",
+    "ronde": 16,
+    "datum": "2027-04-11",
+    "tegenstander": "Helmond H4",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-04-18_Push_H4",
+    "ronde": 17,
+    "datum": "2027-04-18",
+    "tegenstander": "Push H4",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-05-08_Geel-Zwart_H2-O",
+    "ronde": 18,
+    "datum": "2027-05-08",
+    "tegenstander": "Geel-Zwart H2-O",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-05-23_Were_Di_H4",
+    "ronde": 19,
+    "datum": "2027-05-23",
+    "tegenstander": "Were Di H4",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-05-30_Drunen_H3",
+    "ronde": 20,
+    "datum": "2027-05-30",
+    "tegenstander": "Drunen H3",
+    "locatie": "Uit",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  },
+  {
+    "match_id": "poule_2027-06-05_Den_Bosch_H5",
+    "ronde": 21,
+    "datum": "2027-06-06",
+    "tegenstander": "Den Bosch H5",
+    "locatie": "Thuis",
+    "score": {
+      "eshg": 0,
+      "tegenstander": 0
+    },
+    "resultaat": "Gepland",
+    "punten": 0,
+    "kwarten_bijgehouden": false,
+    "kwarten": null,
+    "goals": [],
+    "corners_bijgehouden": false,
+    "corners": null,
+    "gespeeld": false,
+    "notities": {
+      "tactiek": "",
+      "evaluatie": ""
+    },
+    "extra_stats": {
+      "kaarten": "",
+      "invallers": ""
+    }
+  }
+]
