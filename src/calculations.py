@@ -858,7 +858,7 @@ def calculate_elo_ratings(
 
 
 def run_monte_carlo_simulation(
-    matches: list[dict], n_simulations: int = 1000
+    matches: list[dict], n_simulations: int = 1000, model_type: str = "standaard"
 ) -> tuple[pd.DataFrame, dict]:
     """Simulate the remaining pool fixtures and summarize final standings."""
     if n_simulations <= 0:
@@ -914,24 +914,67 @@ def run_monte_carlo_simulation(
         if pool_goals_against
         else 2.5
     )
-    averages = {
-        team_key: (
-            sum(team_goals_for[team_key]) / len(team_goals_for[team_key])
-            if team_goals_for[team_key]
-            else fallback_for,
-            sum(team_goals_against[team_key]) / len(team_goals_against[team_key])
-            if team_goals_against[team_key]
-            else fallback_against,
-        )
-        for team_key in team_names
-    }
-    expected_goals = [
-        (
-            max(0.0, (averages[match["thuis"]][0] + averages[match["uit"]][1]) / 2),
-            max(0.0, (averages[match["uit"]][0] + averages[match["thuis"]][1]) / 2),
-        )
-        for match in remaining_matches
-    ]
+
+    if model_type == "aangepast":
+        # 1. Bereken ELO-ratings van alle teams
+        elo_df = calculate_elo_ratings(matches)
+        elo_dict = {
+            _team_key(str(row["Team"])): float(row["ELO Rating"])
+            for _, row in elo_df.iterrows()
+        }
+
+        # 2. Bayesian shrinkage naar het competitiegemiddelde (prior M = 4 wedstrijden)
+        PRIOR_WEIGHT = 4.0
+        league_avg = fallback_for
+
+        shrunk_averages = {}
+        for team_key in team_names:
+            n_played = len(team_goals_for[team_key])
+            gf = sum(team_goals_for[team_key])
+            ga = sum(team_goals_against[team_key])
+
+            avg_for = (gf + PRIOR_WEIGHT * league_avg) / (n_played + PRIOR_WEIGHT)
+            avg_against = (ga + PRIOR_WEIGHT * league_avg) / (n_played + PRIOR_WEIGHT)
+            shrunk_averages[team_key] = (avg_for, avg_against)
+
+        # 3. Bereken verwachte doelpunten per wedstrijd met ELO-correctie (zonder thuisvoordeel)
+        expected_goals = []
+        for match in remaining_matches:
+            home_key = match["thuis"]
+            away_key = match["uit"]
+
+            # Basis lambda op basis van gescoorde en geïncasseerde doelpunten
+            base_home = (shrunk_averages[home_key][0] * shrunk_averages[away_key][1]) / league_avg
+            base_away = (shrunk_averages[away_key][0] * shrunk_averages[home_key][1]) / league_avg
+
+            # ELO invloed: 100 ELO rating verschil = ~0.25 doelpunt verschuiving
+            elo_diff = elo_dict.get(home_key, 1500.0) - elo_dict.get(away_key, 1500.0)
+            elo_shift = (elo_diff / 400.0)
+
+            lambda_home = max(0.2, base_home + elo_shift)
+            lambda_away = max(0.2, base_away - elo_shift)
+            expected_goals.append((lambda_home, lambda_away))
+
+    else:
+        # Huidige standaard berekening
+        averages = {
+            team_key: (
+                sum(team_goals_for[team_key]) / len(team_goals_for[team_key])
+                if team_goals_for[team_key]
+                else fallback_for,
+                sum(team_goals_against[team_key]) / len(team_goals_against[team_key])
+                if team_goals_against[team_key]
+                else fallback_against,
+            )
+            for team_key in team_names
+        }
+        expected_goals = [
+            (
+                max(0.0, (averages[match["thuis"]][0] + averages[match["uit"]][1]) / 2),
+                max(0.0, (averages[match["uit"]][0] + averages[match["thuis"]][1]) / 2),
+            )
+            for match in remaining_matches
+        ]
 
     teams = list(team_names)
     points_by_team = {team: np.zeros(n_simulations) for team in teams}
@@ -1025,8 +1068,7 @@ def run_monte_carlo_simulation(
                         np.count_nonzero(positions == position) / n_simulations * 100
                     )
                     for position in range(1, n_teams + 1)
-                }
-
+                },
             }
         )
     summary = pd.DataFrame(
@@ -1060,27 +1102,28 @@ def run_monte_carlo_simulation(
         ).reset_index(drop=True)
 
     target_team = _team_key(_ESHG_TEAM)
-    target_distribution = pd.DataFrame(
-        [
-            {
-                "Positie": position,
-                "Kans (%)": (
-                    np.count_nonzero(positions_by_team[target_team] == position)
-                    / n_simulations
-                    * 100
-                ),
-            }
-            for position in range(1, n_teams + 1)
-        ],
-        columns=["Positie", "Kans (%)"],
-    ) if target_team in positions_by_team else pd.DataFrame(
-        columns=["Positie", "Kans (%)"]
+    target_distribution = (
+        pd.DataFrame(
+            [
+                {
+                    "Positie": position,
+                    "Kans (%)": (
+                        np.count_nonzero(positions_by_team[target_team] == position)
+                        / n_simulations
+                        * 100
+                    ),
+                }
+                for position in range(1, n_teams + 1)
+            ],
+            columns=["Positie", "Kans (%)"],
+        )
+        if target_team in positions_by_team
+        else pd.DataFrame(columns=["Positie", "Kans (%)"])
     )
     return summary, {
         "team": _ESHG_TEAM,
         "positie_distributie": target_distribution,
     }
-
 
 def simulate_standings(simulated_matches: list[dict]) -> pd.DataFrame:
     """Return standings after temporarily applying the simulated match results."""

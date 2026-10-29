@@ -32,26 +32,41 @@ _PERCENT_POSITION=[
 
 @st.cache_data(show_spinner=False)
 def _cached_monte_carlo(
-    matches: list[dict], n_simulations: int
+    matches: list[dict], n_simulations: int, model_type: str
 ) -> tuple[pd.DataFrame, dict]:
-    return run_monte_carlo_simulation(matches, n_simulations)
+    return run_monte_carlo_simulation(matches, n_simulations, model_type=model_type)
 
 
 def _render_monte_carlo(matches: list[dict]) -> None:
-    n_simulations = st.select_slider(
-        "Aantal simulaties",
-        options=[500, 600, 1000, 2500, 10000],
-        value=1000,
-        key="monte_carlo_simulation_count",
-    )
+    # Knoppen/sliders netjes naast elkaar in 2 kolommen
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        n_simulations = st.select_slider(
+            "Aantal simulaties",
+            options=[500, 1000, 2500, 10000],
+            value=1000,
+            key="monte_carlo_simulation_count",
+        )
+
+    with col2:
+        model_choice = st.radio(
+            "Voorspelmodel",
+            options=["Standaard", "Aangepast (Shrinkage + ELO)"],
+            index=1,
+            help="Standaard gebruikt pure doelpuntgemiddelden. Aangepast corrigeert kleine steekproeven richting het competitiegemiddelde en weegt ELO-verschil mee.",
+        )
+        model_type = "aangepast" if "Aangepast" in model_choice else "standaard"
+
     if st.button("Start Simulatie", type="primary"):
         try:
             st.session_state["monte_carlo_result"] = _cached_monte_carlo(
-                matches, n_simulations
+                matches, n_simulations, model_type
             )
         except ValueError as error:
             st.error(f"De seizoensprognose kon niet worden berekend: {error}")
             return
+        
 
     result = st.session_state.get("monte_carlo_result")
     if not isinstance(result, tuple) or len(result) != 2:
