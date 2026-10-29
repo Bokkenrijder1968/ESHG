@@ -924,7 +924,7 @@ def run_monte_carlo_simulation(
         }
 
         # 2. Bayesian shrinkage naar het competitiegemiddelde (prior M = 4 wedstrijden)
-        PRIOR_WEIGHT = 4.0
+        PRIOR_WEIGHT = 4
         league_avg = fallback_for
 
         shrunk_averages = {}
@@ -1053,6 +1053,11 @@ def run_monte_carlo_simulation(
                     / n_simulations
                     * 100
                 ),
+                "Kans op Linkerrijtje (%)": (
+                    np.count_nonzero(positions <= min(6, n_teams))
+                    / n_simulations
+                    * 100
+                ),
                 "Kans op Degradatiezone (%)": (
                     np.count_nonzero((positions == 10) | (positions == 11))
                     / n_simulations
@@ -1077,6 +1082,7 @@ def run_monte_carlo_simulation(
             "Team",
             "Kans op Kampioenschap (%)",
             "Kans op Top 3 (%)",
+            "Kans op Linkerrijtje (%)",
             "Kans op Degradatiezone (%)",
             "Verwachte Eindpositie (gemiddeld)",
             "Verwachte Eindpositie (mediaan)",

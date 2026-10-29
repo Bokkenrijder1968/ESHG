@@ -100,6 +100,7 @@ def render_table_view() -> None:
             hide_index=True,
             column_order=_DISPLAY_COLUMNS,
             width="stretch",
+            height=(len(standings) + 1) * 36,
         )
 
     played_matches = sorted(

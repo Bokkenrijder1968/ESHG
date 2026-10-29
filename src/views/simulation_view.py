@@ -14,6 +14,7 @@ _PERCENT_COLUMNS = [
     "Kans op Kampioenschap (%)",
     "Kans op Top 3 (%)",
     "Kans op Degradatiezone (%)",
+    "Kans op Linkerrijtje (%)",
 ]
 
 _PERCENT_POSITION=[
@@ -44,7 +45,7 @@ def _render_monte_carlo(matches: list[dict]) -> None:
     with col1:
         n_simulations = st.select_slider(
             "Aantal simulaties",
-            options=[500, 1000, 2500, 10000],
+            options=[10, 500, 1000, 2500, 10000],
             value=1000,
             key="monte_carlo_simulation_count",
         )
