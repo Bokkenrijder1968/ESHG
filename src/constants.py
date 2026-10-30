@@ -15,6 +15,6 @@ OPPONENTS = [
 PLAYERS = [
     "Dobby", "Maarten", "Menno", "Schenk", "Marko",
     "Tito", "Joep", "Mees", "Padt", "Kliko",
-    "Tim (K)", "Loek", "Tijl", "Bram", "Tibbe", "Gastspeler", "Eigen doelpunt tegenstander"
+    "Tim (K)", "Loek", "Tijl", "Bram", "Tibbe", "Eigen doelpunt tegenstander"
 ]
 ASSIST_OPTIONS = ["Geen assist"] + [p for p in PLAYERS if p != "Eigen doelpunt tegenstander"]
