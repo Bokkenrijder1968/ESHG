@@ -1,0 +1,52 @@
+name: Auto Update Hockey Scores
+
+on:
+  schedule:
+    # Tijden in UTC (Nederland is UTC+1 in wintertijd, UTC+2 in zomertijd)
+    # Zondagavond om 18:00 UTC (~19:00/20:00 NL tijd)
+    - cron: '0 18 * * 0'
+    # Zondagavond om 21:00 UTC (~22:00/23:00 NL tijd)
+    - cron: '0 21 * * 0'
+    # Maandagochtend om 07:00 UTC (~08:00/09:00 NL tijd)
+    - cron: '0 7 * * 1'
+  workflow_dispatch: # Zorgt voor een handmatige 'Run workflow'-knop in GitHub
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Vereist om wijzigingen te mogen pushen naar de repo
+
+    steps:
+      - name: Code ophalen
+        uses: actions/checkout@v4
+
+      - name: Python instellen
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Dependencies installeren
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright requests
+          playwright install --with-deps chromium
+
+      - name: Synchronisatiescript uitvoeren
+        run: python sync_with_playwright.py
+
+      - name: Wijzigingen controleren en committen
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Controleer of er daadwerkelijk wijzigingen zijn in data/all_matches.json
+          if ! git diff --quiet data/all_matches.json; then
+            echo "Nieuwe scores/standen gevonden, committen naar main..."
+            git add data/all_matches.json
+            git commit -m "Auto-update competitie uitslagen en standen [skip ci]"
+            git push origin main
+          else
+            echo "Geen wijzigingen in wedstrijden, commit overgeslagen."
+          fi
