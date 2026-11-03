@@ -1,0 +1,26 @@
+import requests
+
+API_URL = "https://app.hockeyweerelt.nl/poules/182843/teams/3081"
+
+# Kopieer deze vers uit DevTools (ze moeten bij elkaar horen)
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Origin": "https://www.hockey.nl",
+    "Referer": "https://www.hockey.nl/",
+    "X-Requested-With": "XMLHttpRequest",
+    
+    # De twee tokens en de handtekening uit screenshot 5:
+    "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlY1VXZBaWJmUkRWckN0dWZPY1ljc2gtNXIwRkRKcFpyQXQ4cmpUTUxSSVUifQ.eyJhdWQiOlsiMDE5Y2JlMzMtZDk1Mi03MmIzLWFmODktNjUzYjM1ZjQzMGM3IiwiZmVkZXJhdGlvbiIsImxpc2EiLCJmZWRlcmF0aW9uX3JlZmVyZW5jZV9pZCIsIks2NEhLM1YiXSwiYXpwIjoiMDE5Y2JlMzMtZDk1Mi03MmIzLWFmODktNjUzYjM1ZjQzMGM3IiwiaXNzIjoiaHR0cHM6Ly9sb2dpbi5ob2NrZXl3ZWVyZWx0Lm5sIiwiaWF0IjoxNzkzNzM1MzE4LCJleHAiOjE3OTM3NzEzMTgsInN1YiI6Imxpc2F8SzY0SEszVnwyMjdlZjhmMi0wNmM0LTQ5ZTgtOTkyMC03ODJlOWViM2Y1MDkiLCJpZCI6IjEwMzUwMyIsImluaXRpYWxzIjoiVE9IIiwiZmFtaWx5X25hbWUiOiJUZXIgSG9yc3QiLCJnaXZlbl9uYW1lIjoiVGltbWUiLCJtaWRkbGVfbmFtZSI6IiIsImdlbmRlciI6Ik1BTEUiLCJiaXJ0aGRhdGUiOiIyMDAxLTA3LTAxIiwiZmVkZXJhdGlvbl9yZWZlcmVuY2VfaWQiOiJLNjRISzNWIiwicHJvZmlsZV9waWN0dXJlX3VybCI6bnVsbCwiZW1haWwiOiJ0aW1tZXRoMTJAZ21haWwuY29tIiwicGVyc29uX2lkIjoxMDMyNTUwLCJyb2xlcyI6W3sicm9sZV9pZCI6NDgsInJvbGVfc2hvcnRfbmFtZSI6IlJGIn0seyJyb2xlX2lkIjo0LCJyb2xlX3Nob3J0X25hbWUiOiJWRSJ9XX0.CO4tQt4vCo2JlrHLtW2IhmKbsWv3i8BJ3n-wlrvQ6daoJAPadsII1wCPVWM0Rl2BE4HDwhiZFThgC9JFXVU1WrT-cO_v53Y2nqABAE7WNx-23dDVYoB3TCprIG4OH8w6_NMgrQBJyjZOALVwal9DX4F02bwM20dw80Pd8ssbHV0FLN_hR2I_L946XqDGULIh_ySlad_sKu5R72KdVb5qZEtZ6OuYZ3ZiqaqAOHMS70Ayw-AlZyMES3tst4fGr6MpG0ViQHHDZqkDAefhoEo_HPA1YxaXXivFso5ujxOY4rQE2nbrU8btGZqbMx_fTTPTjrRLHvyaDgil_2m6-hEkuh7QDmFUBhZG5jidhaEKTzi3gUTcLX91vmhTJAeuoLvnvbbqT8yHN1PSGqRVozqPRnG1Bd22YwGcI3HBq23GxWaArOORyFpaPzhGQ6Qq2Rgp725jk1Z1mU1oOAHSG-AumHNCFiZ4AAas07hyZjKfmy9XgIUOcygwvEMcxGiu2RxGtNoI5VLGh67k3cjWt35bgD0KVrWrJ617CnzpVXKM8ZyoD6hGTsbUU_0LvJWNpDZOFfHeeYHiHoKtVs0i4aHrco1zzEjeLSn3a3dKpoP4R0qjKg6X2mYGy4PxHEBxEaotP4apx6SPqWSS2hsxYqcHMhCMMLk2LgVskTCy_b9FfgQ", 
+    "X-Hapi-Authorization": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1dWlkIjoiMzdmYzhjNDUtYTMyNS00NGZiLTljZTAtYWVlMDg0MjI3OWY5In0.PexnbgIngtSna6DBoT9iQMUM7ov94TWuUFGa_TdhR79vI6l5WvXZU87g-rCJ83dAMSSIjFsgrJ4S7V0WfbM6Nho4yM9ASeiTTNOLEU-QStrZAqLWuY6gL5BbzthVM7ZMt6QdT9ypFDWZzue3P111nhITlEaUI11MUFCx8IdLy0NHxxtTBBrjfUWyrTLEuOArQuMlo0ifWPNf5US9JeMFfU8eHYfVMdq9XK2ZItrDUF0hbB7xbvd_Nm9gtYyhYsZia-h9L5j7vvgZMK3aACeaSqrCPZ-iDdmuqbFtzweve5kQws3IwqvdR4MXhFlCEmbmnNyDXEir8MG2BMURZrw_zb3M5Sl5Jk0KIO8nc96azPEy3YL57WDcBVlBfJFI_mDG_cBwWGlTFzi-cKkuFLxxilR8IVRq6JejN-Bv70DqvUvlWbD5bUARcarbFGypz3wm-_LXU1AGT0zWbBOXnHIZ2D-YydHP24eDZLyEDtazlHFCj8pckGn_dd5G5a_N9TB_2ZjZjK9SjR3abArkcJyPcQBlkPnTvgPn4Zes0NqD4Rh8Jec7iaXelrMNHiSLIedeFL1SJ9wbtG3cv13Q7q_ZSuVSEeFv_nABMSK67HsSW2oV_DYvvs3SVt-RkBLtsTBGaDHUUWY-4wD64hBXU-y7Fz3x6PgjQ7fg5NTX3XAOLBU",
+    "X-Hapi-Signature": "2af99e0f7346fcdc4b1174ce50f04be695ad9a25",
+    "X-Hapi-Timestamp": "1793743844",
+    "X-Hapi-Version": "8"
+}
+
+resp = requests.get(API_URL, headers=HEADERS)
+print("Status code:", resp.status_code)
+if resp.status_code == 200:
+    print("🎉 SUCCES! Live data binnengehaald. Aantal bytes:", len(resp.content))
+else:
+    print("Fout:", resp.text)
