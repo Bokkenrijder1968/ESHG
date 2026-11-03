@@ -1,5 +1,6 @@
 import math
 from typing import Any
+from urllib.parse import quote_plus
 
 import pandas as pd
 import streamlit as st
@@ -50,6 +51,57 @@ def _poisson_probabilities(expected_goals: float) -> list[float]:
             probabilities[-1] * expected_goals / goals
         )
     return probabilities
+
+
+def _render_match_location(matches: list[dict[str, Any]], opponent: str) -> None:
+    fixtures = sorted(
+        (
+            match
+            for match in matches
+            if not match.get("gespeeld")
+            and _ESHG_TEAM in (
+                str(match.get("thuis", "")),
+                str(match.get("uit", "")),
+            )
+            and opponent in (
+                str(match.get("thuis", "")),
+                str(match.get("uit", "")),
+            )
+        ),
+        key=lambda match: str(match.get("datum", "")),
+    )
+    if not fixtures:
+        st.info(f"Er is geen geplande wedstrijd tegen {opponent} gevonden.")
+        return
+
+    match = fixtures[0]
+    accommodation = str(match.get("locatie_accommodatie") or "").strip()
+    address = str(match.get("locatie_adres") or "").strip()
+    field_name = str(match.get("veld_naam") or "").strip()
+    field_type = str(match.get("veld_type") or "").strip()
+
+    st.caption(
+        f"{match.get('datum', 'Datum onbekend')}"
+        + (f" · {match['tijd']}" if match.get("tijd") else "")
+        + f" · {match.get('thuis', '?')} – {match.get('uit', '?')}"
+    )
+    location_text = " · ".join(value for value in (accommodation, address) if value)
+    if address:
+        maps_url = (
+            "https://www.google.com/maps/search/?api=1&query="
+            f"{quote_plus(address)}"
+        )
+        st.markdown(f"[{location_text or address}]({maps_url})")
+    elif location_text:
+        st.write(location_text)
+    else:
+        st.write("Locatie nog niet bekend.")
+
+    location_columns = st.columns(2)
+    with location_columns[0]:
+        st.write(f"**Veld:** {field_name or 'Niet bekend'}")
+    with location_columns[1]:
+        st.write(f"**Type veld:** {field_type or 'Niet bekend'}")
 
 
 def _render_prediction(matches: list[dict[str, Any]], opponent: str) -> None:
@@ -286,3 +338,6 @@ def render_matchup_view() -> None:
 
     st.subheader("Statistische voorspelling")
     _render_prediction(matches, opponent)
+
+    st.subheader("Wedstrijdlocatie")
+    _render_match_location(matches, opponent)
