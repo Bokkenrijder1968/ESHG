@@ -18,3 +18,16 @@ PLAYERS = [
     "Tim (K)", "Loek", "Tijl", "Bram", "Tibbe", "Willem", "Eigen doelpunt tegenstander"
 ]
 ASSIST_OPTIONS = ["Geen assist"] + [p for p in PLAYERS if p != "Eigen doelpunt tegenstander"]
+
+REISTIJDEN_MINUTEN = {
+    "helmondh4": 20,
+    "hopbelh2o": 25,
+    "geelzwarth2o": 25,
+    "weredih4": 30,
+    "weredih5": 30,
+    "denboschh5": 35,
+    "shoth2o": 35,
+    "drunenh3": 40,
+    "pushh4": 45,
+    "warandeh3": 50,
+}

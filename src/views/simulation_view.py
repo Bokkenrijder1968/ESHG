@@ -4,6 +4,7 @@ import streamlit as st
 
 from src.calculations import (
     calculate_elo_ratings,
+    calculate_standings,
     get_all_matches,
     run_monte_carlo_simulation,
 )
@@ -11,10 +12,10 @@ from src.calculations import (
 
 _ESHG_TEAM = "Don Quishoot H3"
 _PERCENT_COLUMNS = [
-    "Kans op Kampioenschap (%)",
-    "Kans op Top 3 (%)",
-    "Kans op Degradatiezone (%)",
-    "Kans op Linkerrijtje (%)",
+    "Kampioenschap (%)",
+    "Top 3 (%)",
+    "Degradatiekans (%)",
+    "Linkerrijtje (%)",
 ]
 
 _PERCENT_POSITION=[
@@ -30,6 +31,15 @@ _PERCENT_POSITION=[
     "Plek 10 (%)",
     "Plek 11 (%)",
 ]
+
+
+def _subtle_difference_color(difference: float) -> str:
+    if difference > 0:
+        return "background-color: rgba(25, 135, 84, 0.10)"
+    if difference < 0:
+        return "background-color: rgba(220, 53, 69, 0.10)"
+    return ""
+
 
 @st.cache_data(show_spinner=False)
 def _cached_monte_carlo(
@@ -85,38 +95,129 @@ def _render_monte_carlo(matches: list[dict]) -> None:
         kpi_columns = st.columns(4)
         kpi_columns[0].metric(
             "Verwachte Eindpositie",
-            f"{target['Verwachte Eindpositie (gemiddeld)']:.2f}",
-            f"Mediaan: {target['Verwachte Eindpositie (mediaan)']:.0f}",
+            f"{target['Gemiddelde Eindpositie']:.2f}",
+            f"Mediaan: {target['Mediaan']:.0f}",
         )
         kpi_columns[1].metric(
             "Kans op Kampioenschap",
-            f"{target['Kans op Kampioenschap (%)']:.1f}%",
+            f"{target['Kampioenschap (%)']:.1f}%",
         )
-        kpi_columns[2].metric("Kans op Top 3", f"{target['Kans op Top 3 (%)']:.1f}%")
+        kpi_columns[2].metric("Kans op Top 3", f"{target['Top 3 (%)']:.1f}%")
         kpi_columns[3].metric(
             "Kans op Degradatiezone",
-            f"{target['Kans op Degradatiezone (%)']:.1f}%",
+            f"{target['Degradatiekans (%)']:.1f}%",
         )
 
     st.subheader("Promotie / degradatie kansen")
     if summary.empty:
         st.info("Er zijn geen teams om te tonen.")
     else:
-        base_summary = summary.drop(columns=_PERCENT_POSITION)
+        current_standings = calculate_standings(matches)
+        current_positions = {
+            str(row["Team"]): int(row["Pos"])
+            for _, row in current_standings.iterrows()
+        }
+        base_summary = summary.drop(columns=_PERCENT_POSITION).copy()
+        base_summary = base_summary.rename(
+            columns={
+                "Gemiddelde Eindpositie": "MC"
+            }
+        )
+        base_summary.insert(
+            1,
+            "KNHB",
+            base_summary["Team"].map(current_positions).fillna(pd.NA).astype("Int64"),
+        )
+        base_summary.insert(
+            3,
+            "KNHB - MC",
+            base_summary.apply(
+                lambda row: (
+                    float(row["KNHB"]) - float(row["MC"])
+                    if pd.notna(row["KNHB"])
+                    else pd.NA
+                ),
+                axis=1,
+            ),
+        )
+        comparison_columns = [
+            "Team",
+            "KNHB",
+            "MC",
+            "KNHB - MC",
+        ]
+        remaining_columns = [
+            column for column in base_summary.columns if column not in comparison_columns
+        ]
+        base_summary = base_summary[comparison_columns + remaining_columns]
+
+        def style_monte_carlo_difference(row: pd.Series) -> list[str]:
+            styles = [""] * len(row)
+            difference = row["KNHB - MC"]
+            if pd.notna(difference):
+                styles[row.index.get_loc("KNHB - MC")] = (
+                    _subtle_difference_color(float(difference))
+                )
+            return styles
+
         styled_summary = (
             base_summary.style.format(
                 {
                     **{column: "{:.1f}%" for column in _PERCENT_COLUMNS},
-                    "Verwachte Eindpositie (gemiddeld)": "{:.2f}",
-                    "Verwachte Eindpositie (mediaan)": "{:.1f}",
-                    "Verwachte Punten (gemiddeld)": "{:.1f}",
+                    "MC": "{:.2f}",
+                    "KNHB - MC": "{:+.2f}",
+                    "Mediaan": "{:.0f}",
+                    "10e Percentiel": "{:.0f}",
+                    "90e Percentiel": "{:.0f}",
+                    "Verwachte Punten": "{:.1f}",
                 }
             )
             .background_gradient(
                 subset=pd.Index(_PERCENT_COLUMNS), cmap="RdYlGn"
             )
+            .apply(style_monte_carlo_difference, axis=1)
         )
-        st.dataframe(styled_summary, hide_index=True, width="stretch", height=(len(summary) + 1) * 36)
+        st.caption(
+            "MC is de verwachte gemiddelde eindpositie. Het verschil "
+            "is KNHB-stand minus Monte Carlo-stand; een negatieve waarde betekent "
+            "dat KNHB het team hoger (dus beter) plaatst. De 10e en 90e Percentielentielen "
+            "geven een 80%-interval van de gesimuleerde eindposities."
+        )
+        st.dataframe(
+            styled_summary,
+            hide_index=True,
+            width="stretch",
+            height=(len(summary) + 1) * 36,
+            column_order=list(base_summary.columns),
+            column_config={
+                "Team": st.column_config.TextColumn("Team", width=120),
+                "KNHB": st.column_config.NumberColumn(
+                    "KNHB", width="small"
+                ),
+                "MC": st.column_config.NumberColumn(
+                    "MC", width="small"
+                ),
+                "KNHB - MC": st.column_config.NumberColumn(
+                    "KNHB - MC", width="small"
+                ),
+                **{
+                    column: st.column_config.NumberColumn(column, width=120)
+                    for column in _PERCENT_COLUMNS
+                },
+                "Mediaan": st.column_config.NumberColumn(
+                    "Mediaan", width="small"
+                ),
+                "10e Percentiel": st.column_config.NumberColumn(
+                    "10e Percentiel", width=80
+                ),
+                "90e Percentiel": st.column_config.NumberColumn(
+                    "90e Percentiel", width=80
+                ),
+                "Verwachte Punten": st.column_config.NumberColumn(
+                    "Verwachte Punten", width=100
+                ),
+            },
+        )
 
     st.subheader("Verwachte eindstand")
     if summary.empty:
@@ -177,6 +278,15 @@ def _render_power_rankings(matches: list[dict]) -> None:
     rankings["Verschil ELO vs. KNHB"] = (
         rankings["Positie KNHB"] - rankings["ELO Positie"]
     )
+    elo_differences = {
+        str(row["Team"]): float(row["Verschil ELO vs. KNHB"])
+        for _, row in rankings.iterrows()
+    }
+    rankings["Positie KNHB"] = rankings.apply(
+        lambda row: f"{int(row['Positie KNHB'])} ({row['Verschil ELO vs. KNHB']:+.0f})",
+        axis=1,
+    )
+    rankings = rankings.drop(columns=["Verschil ELO vs. KNHB"])
     display_rankings = rankings.rename(
         columns={
             "SoS Gespeeld": "Moeilijkste programma tot nu toe",
@@ -186,8 +296,17 @@ def _render_power_rankings(matches: list[dict]) -> None:
     st.caption(
         "Een positieve afwijking betekent dat ELO het team hoger inschat dan de "
         "officiële KNHB-stand. Strength of Schedule is de gemiddelde ELO-rating "
-        "van de tegenstanders; een hogere waarde duidt op sterkere tegenstand."
+        "van de tegenstanders; een hogere waarde duidt op sterkere tegenstand. "
+        "Het getal tussen haakjes achter de KNHB-positie is het verschil "
+        "tussen de KNHB- en ELO-positie."
     )
+    def style_elo_difference(row: pd.Series) -> list[str]:
+        styles = [""] * len(row)
+        styles[row.index.get_loc("Positie KNHB")] = _subtle_difference_color(
+            elo_differences[str(row["Team"])]
+        )
+        return styles
+
     st.dataframe(
         display_rankings.style.format(
             {
@@ -195,13 +314,26 @@ def _render_power_rankings(matches: list[dict]) -> None:
                 "ELO Verschil t.o.v. Start": "{:+.1f}",
                 "Moeilijkste programma tot nu toe": "{:.1f}",
                 "Zwaarste resterende programma": "{:.1f}",
-                "Verschil ELO vs. KNHB": "{:+.0f}",
             }
-        ).background_gradient(
-            subset=pd.Index(["Verschil ELO vs. KNHB"]), cmap="RdYlGn"
-        ),
+        ).apply(style_elo_difference, axis=1),
         hide_index=True,
         width="stretch",
+        height=(len(display_rankings) + 1) * 36,
+        column_config={
+            "ELO Positie": st.column_config.NumberColumn("ELO Positie", width="small"),
+            "Positie KNHB": st.column_config.TextColumn("Positie KNHB", width="small"),
+            "Team": st.column_config.TextColumn("Team", width="medium"),
+            "ELO Rating": st.column_config.NumberColumn("ELO Rating", width="small"),
+            "ELO Verschil t.o.v. Start": st.column_config.NumberColumn(
+                "ELO Verschil t.o.v. Start", width="small"
+            ),
+            "Moeilijkste programma tot nu toe": st.column_config.NumberColumn(
+                "Moeilijkste programma tot nu toe", width="small"
+            ),
+            "Zwaarste resterende programma": st.column_config.NumberColumn(
+                "Zwaarste resterende programma", width="small"
+            ),
+        },
     )
 
 

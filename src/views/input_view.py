@@ -433,7 +433,7 @@ def _render_poule_by_round_input(all_matches: list[dict[str, object]]) -> None:
         submitted = st.form_submit_button(
             f"💾 Alle uitslagen van speelronde {selected_round} opslaan",
             type="primary",
-            use_container_width=True,
+            width="stretch",
         )
 
         if submitted:

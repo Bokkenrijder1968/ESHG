@@ -161,7 +161,7 @@ def render_players_view() -> None:
             margin=dict(l=20, r=20, t=30, b=20),
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # =========================================================================
     # 4. GOUDEN DUO'S
@@ -170,7 +170,7 @@ def render_players_view() -> None:
         top_duos = get_top_duos()
         if not top_duos.empty:
             st.subheader("🤝 Gouden duo's")
-            st.dataframe(top_duos, hide_index=True, use_container_width=True)
+            st.dataframe(top_duos, hide_index=True, width="stretch")
     except Exception:
         pass
 

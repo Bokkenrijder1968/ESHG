@@ -5,6 +5,9 @@ from urllib.parse import quote_plus
 import pandas as pd
 import streamlit as st
 
+from datetime import datetime, timedelta
+import urllib.parse
+
 from src.calculations import (
     _common_opponents_expected_diff,
     _team_recent_averages,
@@ -15,7 +18,7 @@ from src.calculations import (
     get_opponents_by_schedule,
     get_opponent_form,
 )
-from src.constants import OPPONENTS
+from src.constants import OPPONENTS, REISTIJDEN_MINUTEN
 
 
 _ESHG_TEAM = "Don Quishoot H3"
@@ -53,55 +56,120 @@ def _poisson_probabilities(expected_goals: float) -> list[float]:
     return probabilities
 
 
-def _render_match_location(matches: list[dict[str, Any]], opponent: str) -> None:
-    fixtures = sorted(
+
+def _render_match_location(
+    matches: list[dict[str, Any]], opponent: str
+) -> None:
+    """Rendert de locatie en verzameltijd voor een komende wedstrijd."""
+    upcoming_matches = sorted(
         (
             match
             for match in matches
-            if not match.get("gespeeld")
-            and _ESHG_TEAM in (
-                str(match.get("thuis", "")),
-                str(match.get("uit", "")),
-            )
-            and opponent in (
-                str(match.get("thuis", "")),
-                str(match.get("uit", "")),
-            )
+            if match.get("gespeeld") is False
+            and _ESHG_TEAM in (match.get("thuis"), match.get("uit"))
+            and opponent in (match.get("thuis"), match.get("uit"))
         ),
         key=lambda match: str(match.get("datum", "")),
     )
-    if not fixtures:
-        st.info(f"Er is geen geplande wedstrijd tegen {opponent} gevonden.")
+
+    st.subheader("📍 Locatie & Verzameltijd")
+
+    if not upcoming_matches:
+        st.info(f"Er is geen komende wedstrijd tegen {opponent} bekend.")
         return
 
-    match = fixtures[0]
-    accommodation = str(match.get("locatie_accommodatie") or "").strip()
-    address = str(match.get("locatie_adres") or "").strip()
-    field_name = str(match.get("veld_naam") or "").strip()
-    field_type = str(match.get("veld_type") or "").strip()
-
-    st.caption(
-        f"{match.get('datum', 'Datum onbekend')}"
-        + (f" · {match['tijd']}" if match.get("tijd") else "")
-        + f" · {match.get('thuis', '?')} – {match.get('uit', '?')}"
+    komende_wedstrijd = upcoming_matches[0]
+    wedstrijd_tijd = komende_wedstrijd.get("tijd") or komende_wedstrijd.get("aanvang")
+    accommodatie = komende_wedstrijd.get(
+        "locatie_accommodatie", "Accommodatie onbekend"
     )
-    location_text = " · ".join(value for value in (accommodation, address) if value)
-    if address:
-        maps_url = (
-            "https://www.google.com/maps/search/?api=1&query="
-            f"{quote_plus(address)}"
-        )
-        st.markdown(f"[{location_text or address}]({maps_url})")
-    elif location_text:
-        st.write(location_text)
-    else:
-        st.write("Locatie nog niet bekend.")
+    adres = komende_wedstrijd.get("locatie_adres", "")
+    veld_naam = komende_wedstrijd.get("veld_naam", "Veld onbekend")
+    veld_type = komende_wedstrijd.get("veld_type", "Onbekend type")
+    is_thuis = komende_wedstrijd.get("thuis") == _ESHG_TEAM
 
-    location_columns = st.columns(2)
-    with location_columns[0]:
-        st.write(f"**Veld:** {field_name or 'Niet bekend'}")
-    with location_columns[1]:
-        st.write(f"**Type veld:** {field_type or 'Niet bekend'}")
+    if is_thuis:
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Type wedstrijd", "Thuis (Eindhoven)")
+        col2.metric("Aanvang", wedstrijd_tijd if wedstrijd_tijd else "Tijd volgt")
+        
+        if wedstrijd_tijd:
+            aanwezig, _ = bereken_tijdschema(wedstrijd_tijd, reistijd_minuten=0, buffer_minuten=0)
+            col3.metric("Aanwezig op TU/e (-45m)", aanwezig)
+        else:
+            col3.metric("Aanwezig op TU/e", "Tijd volgt")
+            
+        st.caption(f"**Veld:** {veld_naam} ({veld_type}) | **Locatie:** {accommodatie}")
+    else:
+        # Uitwedstrijd: haal vaste reistijd op
+        key = normalize_key(opponent)
+        reistijd = REISTIJDEN_MINUTEN.get(key, 35)  # 35 min fallback
+        
+        aanwezig, verzamelen = bereken_tijdschema(wedstrijd_tijd, reistijd_minuten=reistijd, buffer_minuten=5)
+        
+        col1, col2, col3 = st.columns(3)
+        col1.metric("🚗 Reistijd auto", f"~{reistijd} min")
+        col2.metric("🏟️ Aanwezig bij club (-45m)", aanwezig if aanwezig else "Tijd volgt")
+        col3.metric("📍 Verzamelen Nassaustraat", verzamelen if verzamelen else "Tijd volgt")
+        
+        st.caption(
+            f"**Veld:** {veld_naam} ({veld_type}) | "
+            f"**Accommodatie:** {accommodatie} | "
+            f"*(Inclusief 5 min buffer tassen/instappen)*"
+        )
+
+    # Google Maps Kaart en navigatielink
+    if adres:
+        render_google_maps_embed(adres, hoogte=260)
+        
+        google_maps_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(adres)}"
+        st.link_button("🗺️ Open in Google Maps Navigatie", google_maps_url, width='stretch')
+    else:
+        st.info("Locatieadres nog niet bekend voor deze wedstrijd.")
+
+
+def normalize_key(name: str) -> str:
+    """Maakt van bijv. 'Warande H3' -> 'warandeh3' voor lookup."""
+    import re
+    return re.sub(r"[\s\-_]+", "", name or "").lower()
+
+def bereken_tijdschema(wedstrijd_tijd_str: str, reistijd_minuten: int, buffer_minuten: int = 5):
+    """
+    Berekent aanwezigheid (T - 45 min) en verzameltijd (Aanwezig - reistijd - buffer).
+    """
+    if not wedstrijd_tijd_str:
+        return None, None
+    try:
+        start_dt = datetime.strptime(wedstrijd_tijd_str, "%H:%M")
+        aanwezig_dt = start_dt - timedelta(minutes=45)
+        verzamelen_dt = aanwezig_dt - timedelta(minutes=reistijd_minuten + buffer_minuten)
+        
+        return aanwezig_dt.strftime("%H:%M"), verzamelen_dt.strftime("%H:%M")
+    except ValueError:
+        return None, None
+
+def render_google_maps_embed(adres: str, hoogte: int = 300):
+    """Toont een interactieve Google Maps kaart zonder API key."""
+    if not adres:
+        return
+    encoded_addr = urllib.parse.quote(adres)
+    embed_url = f"https://maps.google.com/maps?q={encoded_addr}&t=&z=15&ie=UTF8&iwloc=&output=embed"
+    
+    st.iframe(
+        f"""
+        <iframe 
+            width="100%"
+            height="{hoogte}"
+            frameborder="0"
+            scrolling="no"
+            marginheight="0"
+            marginwidth="0"
+            src="{embed_url}"
+            style="border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        </iframe>
+        """,
+        height=hoogte + 10,
+    )
 
 
 def _render_prediction(matches: list[dict[str, Any]], opponent: str) -> None:
@@ -339,5 +407,4 @@ def render_matchup_view() -> None:
     st.subheader("Statistische voorspelling")
     _render_prediction(matches, opponent)
 
-    st.subheader("Wedstrijdlocatie")
     _render_match_location(matches, opponent)

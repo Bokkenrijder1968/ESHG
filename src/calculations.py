@@ -12,6 +12,7 @@ from src.constants import PLAYERS
 _DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 _ALL_MATCHES_FILE = _DATA_DIR / "all_matches.json"
 _ESHG_TEAM = "Don Quishoot H3"
+_MONTE_CARLO_RANDOM_SEED = 42
 _OWN_GOAL_LABEL = "Eigen doelpunt tegenstander"
 _PLAYER_STAT_COLUMNS = [
     "Positie",
@@ -764,66 +765,78 @@ def run_monte_carlo_simulation(
         ]
 
     teams = list(team_names)
-    points_by_team = {team: np.zeros(n_simulations) for team in teams}
-    positions_by_team = {team: np.zeros(n_simulations, dtype=int) for team in teams}
+    team_indices = {team: index for index, team in enumerate(teams)}
+    points = np.zeros((n_simulations, len(teams)), dtype=np.int16)
+    wins = np.zeros((n_simulations, len(teams)), dtype=np.int16)
+    goals_for = np.zeros((n_simulations, len(teams)), dtype=np.int16)
+    goals_against = np.zeros((n_simulations, len(teams)), dtype=np.int16)
 
-    for simulation_index in range(n_simulations):
-        standings: dict[str, dict[str, int]] = {
-            team: {"W": 0, "PT": 0, "DV": 0, "DT": 0} for team in teams
-        }
-        for match in played_matches:
-            home_score = match["score_thuis"]
-            away_score = match["score_uit"]
-            home_row = standings[match["thuis"]]
-            away_row = standings[match["uit"]]
-            home_row["DV"] += home_score
-            home_row["DT"] += away_score
-            away_row["DV"] += away_score
-            away_row["DT"] += home_score
-            if home_score > away_score:
-                home_row["W"] += 1
-                home_row["PT"] += 3
-            elif away_score > home_score:
-                away_row["W"] += 1
-                away_row["PT"] += 3
-            else:
-                home_row["PT"] += 1
-                away_row["PT"] += 1
+    for match in played_matches:
+        home_index = team_indices[match["thuis"]]
+        away_index = team_indices[match["uit"]]
+        home_score = match["score_thuis"]
+        away_score = match["score_uit"]
+        goals_for[:, home_index] += home_score
+        goals_against[:, home_index] += away_score
+        goals_for[:, away_index] += away_score
+        goals_against[:, away_index] += home_score
+        if home_score > away_score:
+            wins[:, home_index] += 1
+            points[:, home_index] += 3
+        elif away_score > home_score:
+            wins[:, away_index] += 1
+            points[:, away_index] += 3
+        else:
+            points[:, home_index] += 1
+            points[:, away_index] += 1
 
-        for match, (home_lambda, away_lambda) in zip(
-            remaining_matches, expected_goals
-        ):
-            home_score = int(np.random.poisson(lam=home_lambda))
-            away_score = int(np.random.poisson(lam=away_lambda))
-            home_row = standings[match["thuis"]]
-            away_row = standings[match["uit"]]
-            home_row["DV"] += home_score
-            home_row["DT"] += away_score
-            away_row["DV"] += away_score
-            away_row["DT"] += home_score
-            if home_score > away_score:
-                home_row["W"] += 1
-                home_row["PT"] += 3
-            elif away_score > home_score:
-                away_row["W"] += 1
-                away_row["PT"] += 3
-            else:
-                home_row["PT"] += 1
-                away_row["PT"] += 1
-
-        ordered_teams = sorted(
-            teams,
-            key=lambda team: (
-                -standings[team]["PT"],
-                -standings[team]["W"],
-                -(standings[team]["DV"] - standings[team]["DT"]),
-                -standings[team]["DV"],
-                team_names[team].casefold(),
-            ),
+    rng = np.random.default_rng(_MONTE_CARLO_RANDOM_SEED)
+    if remaining_matches:
+        home_lambdas = np.array([goals[0] for goals in expected_goals])
+        away_lambdas = np.array([goals[1] for goals in expected_goals])
+        simulated_home_scores = rng.poisson(
+            home_lambdas, size=(n_simulations, len(remaining_matches))
         )
-        for position, team in enumerate(ordered_teams, start=1):
-            positions_by_team[team][simulation_index] = position
-            points_by_team[team][simulation_index] = standings[team]["PT"]
+        simulated_away_scores = rng.poisson(
+            away_lambdas, size=(n_simulations, len(remaining_matches))
+        )
+
+        for match_index, match in enumerate(remaining_matches):
+            home_index = team_indices[match["thuis"]]
+            away_index = team_indices[match["uit"]]
+            home_scores = simulated_home_scores[:, match_index]
+            away_scores = simulated_away_scores[:, match_index]
+            goals_for[:, home_index] += home_scores
+            goals_against[:, home_index] += away_scores
+            goals_for[:, away_index] += away_scores
+            goals_against[:, away_index] += home_scores
+            home_wins = home_scores > away_scores
+            away_wins = away_scores > home_scores
+            wins[:, home_index] += home_wins
+            wins[:, away_index] += away_wins
+            points[:, home_index] += np.where(home_wins, 3, home_scores == away_scores)
+            points[:, away_index] += np.where(away_wins, 3, home_scores == away_scores)
+
+    goal_difference = goals_for - goals_against
+    name_order = np.argsort([team_names[team].casefold() for team in teams])
+    order = np.lexsort(
+        (
+            np.broadcast_to(name_order, (n_simulations, len(teams))),
+            -goals_for,
+            -goal_difference,
+            -wins,
+            -points,
+        ),
+        axis=1,
+    )
+    positions = np.empty_like(order, dtype=np.int16)
+    positions[np.arange(n_simulations)[:, None], order] = np.arange(1, len(teams) + 1)
+    positions_by_team = {
+        team: positions[:, index] for team, index in team_indices.items()
+    }
+    points_by_team = {
+        team: points[:, index] for team, index in team_indices.items()
+    }
 
     n_teams = len(teams)
     rows = []
@@ -832,27 +845,29 @@ def run_monte_carlo_simulation(
         rows.append(
             {
                 "Team": team_names[team],
-                "Kans op Kampioenschap (%)": (
+                "Kampioenschap (%)": (
                     np.count_nonzero(positions == 1) / n_simulations * 100
                 ),
-                "Kans op Top 3 (%)": (
+                "Top 3 (%)": (
                     np.count_nonzero(positions <= min(3, n_teams))
                     / n_simulations
                     * 100
                 ),
-                "Kans op Linkerrijtje (%)": (
+                "Linkerrijtje (%)": (
                     np.count_nonzero(positions <= min(6, n_teams))
                     / n_simulations
                     * 100
                 ),
-                "Kans op Degradatiezone (%)": (
+                "Degradatiekans (%)": (
                     np.count_nonzero((positions == 10) | (positions == 11))
                     / n_simulations
                     * 100
                 ),
-                "Verwachte Eindpositie (gemiddeld)": float(np.mean(positions)),
-                "Verwachte Eindpositie (mediaan)": float(np.median(positions)),
-                "Verwachte Punten (gemiddeld)": float(
+                "Gemiddelde Eindpositie": float(np.mean(positions)),
+                "Mediaan": float(np.median(positions)),
+                "10e Percentiel": float(np.percentile(positions, 10)),
+                "90e Percentiel": float(np.percentile(positions, 90)),
+                "Verwachte Punten": float(
                     np.mean(points_by_team[team])
                 ),
                 **{
@@ -867,13 +882,15 @@ def run_monte_carlo_simulation(
         rows,
         columns=[
             "Team",
-            "Kans op Kampioenschap (%)",
-            "Kans op Top 3 (%)",
-            "Kans op Linkerrijtje (%)",
-            "Kans op Degradatiezone (%)",
-            "Verwachte Eindpositie (gemiddeld)",
-            "Verwachte Eindpositie (mediaan)",
-            "Verwachte Punten (gemiddeld)",
+            "Kampioenschap (%)",
+            "Top 3 (%)",
+            "Linkerrijtje (%)",
+            "Degradatiekans (%)",
+            "Gemiddelde Eindpositie",
+            "Mediaan",
+            "10e Percentiel",
+            "90e Percentiel",
+            "Verwachte Punten",
             "Plek 1 (%)",
             "Plek 2 (%)",
             "Plek 3 (%)",
@@ -889,8 +906,8 @@ def run_monte_carlo_simulation(
     )
     if not summary.empty:
         summary = summary.sort_values(
-            ["Kans op Kampioenschap (%)", "Verwachte Eindpositie (gemiddeld)"],
-            ascending=[False, True],
+            ["Gemiddelde Eindpositie", "Kampioenschap (%)"],
+            ascending=[True, False],
             kind="stable",
         ).reset_index(drop=True)
 
