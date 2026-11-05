@@ -1,4 +1,3 @@
-import pandas as pd
 import plotly.express as px
 import streamlit as st
 import numpy as np
@@ -9,9 +8,6 @@ from src.calculations import (
     get_player_match_timeline,
     get_top_duos,
 )
-from src.constants import PLAYERS
-
-
 def _render_podium_card(title: str, top_players: list[tuple[str, int]], unit: str) -> None:
     """Rendert een podiumkaart voor de top 3 van een categorie."""
     medals = ["🥇", "🥈", "🥉"]
@@ -35,7 +31,7 @@ def render_players_view() -> None:
 
     try:
         player_stats = calculate_player_stats()
-    except Exception as error:
+    except ValueError as error:
         st.error(f"Fout bij het laden van spelerstatistieken: {error}")
         return
 
@@ -51,17 +47,20 @@ def render_players_view() -> None:
     top_goals = (
         player_stats[player_stats["Goals"] > 0]
         .sort_values(["Goals", "Veldgoals"], ascending=False)[["Speler", "Goals"]]
-        .values.tolist()
+        .apply(lambda row: (str(row["Speler"]), int(row["Goals"])), axis=1)
+        .tolist()
     )
     top_assists = (
         player_stats[player_stats["Assists"] > 0]
         .sort_values("Assists", ascending=False)[["Speler", "Assists"]]
-        .values.tolist()
+        .apply(lambda row: (str(row["Speler"]), int(row["Assists"])), axis=1)
+        .tolist()
     )
     top_mvp = (
         player_stats[player_stats["Totaal_G_A"] > 0]
         .sort_values(["Totaal_G_A", "Goals"], ascending=False)[["Speler", "Totaal_G_A"]]
-        .values.tolist()
+        .apply(lambda row: (str(row["Speler"]), int(row["Totaal_G_A"])), axis=1)
+        .tolist()
     )
 
     c1, c2, c3 = st.columns(3)
@@ -166,13 +165,10 @@ def render_players_view() -> None:
     # =========================================================================
     # 4. GOUDEN DUO'S
     # =========================================================================
-    try:
-        top_duos = get_top_duos()
-        if not top_duos.empty:
-            st.subheader("🤝 Gouden duo's")
-            st.dataframe(top_duos, hide_index=True, width="stretch")
-    except Exception:
-        pass
+    top_duos = get_top_duos()
+    if not top_duos.empty:
+        st.subheader("🤝 Gouden duo's")
+        st.dataframe(top_duos, hide_index=True, width="stretch")
 
     # =========================================================================
     # 5. VOLLEDIGE TABEL (Zonder kleuren + Klikbare rijen)
@@ -196,11 +192,11 @@ def render_players_view() -> None:
     # =========================================================================
     # 6. SPELERSDETAILS (Automatisch gekoppeld aan de gekozen rij)
     # =========================================================================
-    selected_rows = (
-        table_event.selection.rows
-        if table_event and hasattr(table_event, "selection")
-        else []
-    )
+    selected_rows = []
+    if table_event is not None:
+        selection = table_event.get("selection")
+        if selection is not None:
+            selected_rows = selection.get("rows", [])
 
     # Pak de aangeklikte speler; neem standaard de bovenste speler als er nog niets is aangeklikt
     if selected_rows:

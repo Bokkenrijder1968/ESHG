@@ -1,6 +1,7 @@
 import json
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 import streamlit as st
 
@@ -18,7 +19,7 @@ GOAL_TYPES = ["Veldgoal", "Strafcorner", "Strafbal (PS)"]
 _ESHG_TEAM = "Don Quishoot H3"
 
 
-def _load_all_matches_file() -> list[dict[str, object]]:
+def _load_all_matches_file() -> list[dict[str, Any]]:
     if not ALL_MATCHES_FILE.exists():
         return []
     try:
@@ -29,7 +30,7 @@ def _load_all_matches_file() -> list[dict[str, object]]:
     return data if isinstance(data, list) else []
 
 
-def _save_all_matches_file(records: list[dict[str, object]]) -> None:
+def _save_all_matches_file(records: list[dict[str, Any]]) -> None:
     try:
         ALL_MATCHES_FILE.parent.mkdir(parents=True, exist_ok=True)
         records.sort(
@@ -45,7 +46,7 @@ def _save_all_matches_file(records: list[dict[str, object]]) -> None:
         raise ValueError(f"De wedstrijden konden niet worden opgeslagen: {error}") from error
 
 
-def _get_opponent(match: dict[str, object] | None) -> str:
+def _get_opponent(match: dict[str, Any] | None) -> str:
     if match is None:
         return ""
     opponent = str(match.get("tegenstander", "")).strip()
@@ -60,7 +61,7 @@ def _get_opponent(match: dict[str, object] | None) -> str:
     return ""
 
 
-def _get_location(match: dict[str, object] | None) -> str:
+def _get_location(match: dict[str, Any] | None) -> str:
     if match is None:
         return "Thuis"
     location = str(match.get("locatie", "")).strip().capitalize()
@@ -71,7 +72,7 @@ def _get_location(match: dict[str, object] | None) -> str:
     return "Uit"
 
 
-def _get_total_score(selected_match: dict[str, object] | None, team: str) -> int:
+def _get_total_score(selected_match: dict[str, Any] | None, team: str) -> int:
     if selected_match is None:
         return 0
     is_home = _get_location(selected_match) == "Thuis"
@@ -82,13 +83,13 @@ def _get_total_score(selected_match: dict[str, object] | None, team: str) -> int
     
     if val is not None:
         try:
-            return max(0, int(val))
+            return max(0, int(str(val)))
         except (ValueError, TypeError):
             pass
     return 0
 
 
-def _is_eshg_fixture(match: dict[str, object]) -> bool:
+def _is_eshg_fixture(match: dict[str, Any]) -> bool:
     return _ESHG_TEAM.casefold() in {
         str(match.get("thuis", "")).strip().casefold(),
         str(match.get("uit", "")).strip().casefold(),
@@ -103,14 +104,14 @@ def _determine_result(eshg_goals: int, opp_goals: int) -> tuple[str, int]:
     return "V", 0
 
 
-def _as_dict(value: object) -> dict[str, object]:
+def _as_dict(value: object) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
 # ==============================================================================
 # TAB 1: EIGEN WEDSTRIJD ESHG (UITGEBREID)
 # ==============================================================================
-def _render_eshg_input(all_matches: list[dict[str, object]]) -> None:
+def _render_eshg_input(all_matches: list[dict[str, Any]]) -> None:
     eshg_matches = [m for m in all_matches if _is_eshg_fixture(m)]
     if not eshg_matches:
         st.warning("Geen wedstrijden voor Don Quishoot H3 gevonden in het wedstrijdbestand.")
@@ -237,12 +238,13 @@ def _render_eshg_input(all_matches: list[dict[str, object]]) -> None:
     if eshg_total > 0 and match_is_played:
         for idx in range(eshg_total):
             prev_g = existing_goals[idx] if idx < len(existing_goals) else {}
+            previous_maker = prev_g.get("maker")
             c1, c2, c3, c4 = st.columns([1, 3, 3, 2])
             c1.write(f"Goal #{idx+1}")
             maker = c2.selectbox(
                 "Maker",
                 PLAYERS,
-                index=PLAYERS.index(prev_g.get("maker")) if prev_g.get("maker") in PLAYERS else 0,
+                index=PLAYERS.index(previous_maker) if isinstance(previous_maker, str) and previous_maker in PLAYERS else 0,
                 key=f"m_{match_key}_{idx}",
             )
             assist = c3.selectbox(
@@ -326,7 +328,7 @@ def _render_eshg_input(all_matches: list[dict[str, object]]) -> None:
 # ==============================================================================
 # TAB 2: POULE-UITSLAGEN PER RONDE (BATCH INVOER)
 # ==============================================================================
-def _render_poule_by_round_input(all_matches: list[dict[str, object]]) -> None:
+def _render_poule_by_round_input(all_matches: list[dict[str, Any]]) -> None:
     st.subheader("Poule-uitslagen per speelronde")
     st.caption("Selecteer een speelronde om alle overige competitiewedstrijden in één keer in te vullen of bij te werken.")
 

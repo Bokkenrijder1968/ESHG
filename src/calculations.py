@@ -1,6 +1,6 @@
 import json
 import math
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -107,6 +107,8 @@ def _team_key(team: str) -> str:
 
 def _score(value: object) -> int | None:
     if value is None or isinstance(value, bool):
+        return None
+    if not isinstance(value, (int, float, str)):
         return None
     try:
         score = int(value)
@@ -506,26 +508,26 @@ def calculate_standings(matches: list[dict]) -> pd.DataFrame:
         home_standing = ensure_team(home)
         away_standing = ensure_team(away)
         home_score, away_score = scores
-        home_standing["GS"] += 1
-        away_standing["GS"] += 1
-        home_standing["DV"] += home_score
-        home_standing["DT"] += away_score
-        away_standing["DV"] += away_score
-        away_standing["DT"] += home_score
+        home_standing["GS"] += 1 # pyright: ignore[reportOperatorIssue] # type: ignore
+        away_standing["GS"] = int(away_standing["GS"]) + 1
+        home_standing["DV"] = int(home_standing["DV"]) + home_score
+        home_standing["DT"] = int(home_standing["DT"]) + away_score
+        away_standing["DV"] = int(away_standing["DV"]) + away_score
+        away_standing["DT"] = int(away_standing["DT"]) + home_score
 
         if home_score > away_score:
-            home_standing["W"] += 1
-            home_standing["PT"] += 3
-            away_standing["V"] += 1
+            home_standing["W"] = int(home_standing["W"]) + 1
+            home_standing["PT"] = int(home_standing["PT"]) + 3
+            away_standing["V"] = int(away_standing["V"]) + 1
         elif home_score < away_score:
-            away_standing["W"] += 1
-            away_standing["PT"] += 3
-            home_standing["V"] += 1
+            away_standing["W"] = int(away_standing["W"]) + 1
+            away_standing["PT"] = int(away_standing["PT"]) + 3
+            home_standing["V"] = int(home_standing["V"]) + 1
         else:
-            home_standing["G"] += 1
-            home_standing["PT"] += 1
-            away_standing["G"] += 1
-            away_standing["PT"] += 1
+            home_standing["G"] = int(home_standing["G"]) + 1
+            home_standing["PT"] = int(home_standing["PT"]) + 1
+            away_standing["G"] = int(away_standing["G"]) + 1
+            away_standing["PT"] = int(away_standing["PT"]) + 1
 
     rows = list(standings.values())
     for row in rows:

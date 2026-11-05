@@ -1,0 +1,30 @@
+__pycache__/
+*.pyc
+
+# Local Python environments and tooling
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local application and editor files
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.vscode/*.code-workspace
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# Local data copies
+copy_all_matches.json

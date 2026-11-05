@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+from typing import Any, cast
 
 from src.calculations import get_all_matches, simulate_standings
 
@@ -56,9 +57,10 @@ def _matches_for_selection(
 
 
 def _difference_label(value: object) -> str:
-    if pd.isna(value):
+    scalar_value = cast(Any, value)
+    if pd.isna(scalar_value):
         return "—"
-    difference = int(value)
+    difference = int(scalar_value)
     if difference > 0:
         return f"🟢 ▲ {difference}"
     if difference < 0:

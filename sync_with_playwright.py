@@ -2,6 +2,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
 # ==========================================================
@@ -172,16 +173,16 @@ def run():
                     if "matches" in str(data):
                         captured_data["payload"] = data
                         print(f"🎯 Doelwit response onderschept van: {response.url[:60]}...")
-                except Exception:
-                    pass
+                except (PlaywrightError, ValueError) as error:
+                    print(f"API-response kon niet worden gelezen: {error}")
 
         page.on("response", handle_response)
 
         print(f"🌐 Headless browser navigeert naar: {TARGET_URL}")
         try:
             page.goto(TARGET_URL, wait_until="networkidle", timeout=30000)
-        except Exception as e:
-            print(f"Navigatiefout of timeout: {e}")
+        except PlaywrightError as error:
+            print(f"Navigatiefout of timeout: {error}")
 
         # Wacht maximaal een paar seconden tot het verzoek is geland
         page.wait_for_timeout(3000)

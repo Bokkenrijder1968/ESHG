@@ -155,9 +155,10 @@ def _render_monte_carlo(matches: list[dict]) -> None:
             styles = [""] * len(row)
             difference = row["KNHB - MC"]
             if pd.notna(difference):
-                styles[row.index.get_loc("KNHB - MC")] = (
-                    _subtle_difference_color(float(difference))
-                )
+                for index, column in enumerate(row.index):
+                    if column == "KNHB - MC":
+                        styles[index] = _subtle_difference_color(float(difference))
+                        break
             return styles
 
         styled_summary = (
@@ -301,11 +302,13 @@ def _render_power_rankings(matches: list[dict]) -> None:
         "tussen de KNHB- en ELO-positie."
     )
     def style_elo_difference(row: pd.Series) -> list[str]:
-        styles = [""] * len(row)
-        styles[row.index.get_loc("Positie KNHB")] = _subtle_difference_color(
+        difference_color = _subtle_difference_color(
             elo_differences[str(row["Team"])]
         )
-        return styles
+        return [
+            difference_color if column == "Positie KNHB" else ""
+            for column in row.index
+        ]
 
     st.dataframe(
         display_rankings.style.format(

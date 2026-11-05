@@ -1,12 +1,11 @@
 import math
 from typing import Any
-from urllib.parse import quote_plus
 
 import pandas as pd
 import streamlit as st
 
 from datetime import datetime, timedelta
-import urllib.parse
+from urllib.parse import quote
 
 from src.calculations import (
     _common_opponents_expected_diff,
@@ -105,7 +104,12 @@ def _render_match_location(
         key = normalize_key(opponent)
         reistijd = REISTIJDEN_MINUTEN.get(key, 35)  # 35 min fallback
         
-        aanwezig, verzamelen = bereken_tijdschema(wedstrijd_tijd, reistijd_minuten=reistijd, buffer_minuten=5)
+        if wedstrijd_tijd:
+            aanwezig, verzamelen = bereken_tijdschema(
+                wedstrijd_tijd, reistijd_minuten=reistijd, buffer_minuten=5
+            )
+        else:
+            aanwezig, verzamelen = None, None
         
         col1, col2, col3 = st.columns(3)
         col1.metric("🚗 Reistijd auto", f"~{reistijd} min")
@@ -122,7 +126,7 @@ def _render_match_location(
     if adres:
         render_google_maps_embed(adres, hoogte=260)
         
-        google_maps_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(adres)}"
+        google_maps_url = f"https://www.google.com/maps/search/?api=1&query={quote(adres)}"
         st.link_button("🗺️ Open in Google Maps Navigatie", google_maps_url, width='stretch')
     else:
         st.info("Locatieadres nog niet bekend voor deze wedstrijd.")
@@ -152,7 +156,7 @@ def render_google_maps_embed(adres: str, hoogte: int = 300):
     """Toont een interactieve Google Maps kaart zonder API key."""
     if not adres:
         return
-    encoded_addr = urllib.parse.quote(adres)
+    encoded_addr = quote(adres)
     embed_url = f"https://maps.google.com/maps?q={encoded_addr}&t=&z=15&ie=UTF8&iwloc=&output=embed"
     
     st.iframe(
