@@ -1,5 +1,5 @@
 import pandas as pd
-import streamlit as st
+import streamlit as st # type: ignore[import-not-found]
 from typing import Any, cast
 
 from src.calculations import get_all_matches, simulate_standings

@@ -2,7 +2,7 @@ import math
 from typing import Any
 
 import pandas as pd
-import streamlit as st
+import streamlit as st # type: ignore[import-not-found]
 
 from datetime import datetime, timedelta
 from urllib.parse import quote

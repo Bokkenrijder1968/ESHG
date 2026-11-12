@@ -1,5 +1,5 @@
 import plotly.express as px
-import streamlit as st
+import streamlit as st # type: ignore[import-not-found]
 import numpy as np
 np.random.seed(42)
 

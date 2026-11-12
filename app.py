@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st # type: ignore[import-not-found]
 from src.views.input_view import render_input_view
 from src.views.matchup_view import render_matchup_view
 from src.views.scenario_view import render_scenario_view

@@ -3,7 +3,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-import streamlit as st
+import streamlit as st # type: ignore[import-not-found]
 
 from src.constants import ASSIST_OPTIONS, OPPONENTS, PLAYERS
 

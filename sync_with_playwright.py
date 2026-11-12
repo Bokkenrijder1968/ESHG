@@ -1,9 +1,16 @@
 import json
 import re
+from importlib import import_module
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from playwright.sync_api import Error as PlaywrightError
-from playwright.sync_api import sync_playwright
+
+try:
+    _playwright_sync_api = import_module("playwright.sync_api")
+    PlaywrightError = _playwright_sync_api.Error
+    sync_playwright = _playwright_sync_api.sync_playwright
+except ImportError:
+    PlaywrightError = Exception
+    sync_playwright = None
 
 # ==========================================================
 # CONFIGURATIE
@@ -154,6 +161,13 @@ def update_matches_file(api_payload: dict, filepath: str = MATCHES_FILE):
 # PLAYWRIGHT RUNNER
 # ==========================================
 def run():
+    if sync_playwright is None:
+        raise RuntimeError(
+            "Playwright ontbreekt. Installeer dit met "
+            "'python -m pip install playwright' en voer daarna "
+            "'python -m playwright install chromium' uit."
+        )
+
     captured_data = {}
 
     with sync_playwright() as p:
