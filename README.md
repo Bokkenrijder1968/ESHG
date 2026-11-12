@@ -1,11 +1,71 @@
-# ESHG Dashboard
+# ESHG H1 Dashboard 🏑
 
-Streamlit-dashboard voor wedstrijdinvoer, standen, matchups, spelersstatistieken,
-trends en simulaties van Don Quishoot H3.
+Hét digitale brein achter ESHG H1. Niet omdat we alles zo goed onder controle hebben, was het maar zo'n feest, maar omdat het leuk is na een wedstrijd nét iets meer onzin bij te houden dan strikt noodzakelijk.
 
-## Installatie
+Dit dashboard helpt bij het bijhouden, bekijken en voorspellen van het seizoen. Van wedstrijdinvoer tot ELO-rating: alles staat bij elkaar op één plek.
 
-Gebruik Python 3.11 of nieuwer binnen de bestaande ondersteuning:
+## Wat kun je ermee?
+
+### 📝 Wedstrijden invoeren
+
+Eigen uitslagen en wedstrijdinformatie vastzetten. Denk aan:
+
+- score en resultaat;
+- doelpuntenmakers en assists;
+- doelpunttype, zoals veldgoal, strafcorner of strafbal;
+- kwartstanden;
+- strafcorners;
+- notities, afwezigen en andere extra wedstrijdinformatie.
+
+### 🏆 Stand & schema
+
+Bekijk de actuele competitie-stand, uitslagen en het resterende programma.
+Dit wordt uiteraard automatisch bijgewerkt op basis van informatie van hockeynl match center.
+De stand laat ook zien hoeveel plaatsen een team is gestegen of gedaald ten opzichte van de vorige gespeelde ronde.
+
+### 🎯 Matchup & analyse
+
+Vergelijk ESHG met de volgende tegenstander(s) op basis van:
+
+- onderlinge resultaten;
+- recente vorm;
+- gedeelde tegenstanders;
+- verwachte scores (en winkans);
+- wedstrijdlocatie, reistijd en verzameltijd;
+- een Google Maps-link naar de accommodatie.
+
+### 🔮 Scenario calculator
+
+Speel wat-als met het resterende programma (voor nu komende ronde).
+Wat gebeurt er met de stand als iedereen wint, verliest of als specifieke uitslagen worden ingevuld?
+
+### 📊 Spelers & stats
+
+Bekijk topscorers, assistkoningen, MVP-statistieken en gouden duo's.
+Hier zit ook een controle naar de wedstrijden waarin een speler scoorde of een assist gaf.
+
+### 📈 Trends & fysiek
+
+Ontdek in welk kwart we vlammen, wanneer het even minder loopt en hoe de verdeling tussen veldgoals en corners eruitziet (nog voor weinig wedstrijden bijgehouden, zegt later meer).
+
+### 🎲 Simulaties & ELO
+
+Gebruik Monte Carlo-simulaties en ELO-ratings om de kansen en krachtsverhoudingen in de competitie te verkennen.
+Geen garantie op promotie, wel voer voor groepsapps, zeer tactische discussies en gezonde zelfoverschatting.
+
+## Starten (als je het niet via de link wilt doen)
+
+### Windows
+
+Als Python en de dependencies al beschikbaar zijn:
+
+```powershell
+python -m streamlit run app.py
+```
+
+Of gebruik [`Start_ESHG.bat`](Start_ESHG.bat) als je de lokale snelkoppeling gebruikt.
+
+### Eenmalige installatie
 
 ```powershell
 python -m venv .venv
@@ -13,65 +73,27 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Start het dashboard met:
+Daarna opent Streamlit het dashboard meestal op `http://localhost:8501`.
 
-```powershell
-python -m streamlit run app.py
+## Automatische updates
+
+De competitiegegevens worden automatisch bijgewerkt via GitHub Actions.
+Daarvoor wordt [`sync_with_playwright.py`](sync_with_playwright.py) volgens een schema uitgevoerd.
+Het script haalt uitslagen en wedstrijdlocaties op en werkt [`data/all_matches.json`](data/all_matches.json) bij.
+
+De synchronisatie is vooral bedoeld als gemak.
+Controleer belangrijke wedstrijdgegevens altijd zelf voordat je er grote conclusies aan verbindt.
+
+## Waar staat alles?
+
+```text
+app.py                         # Startpunt van het Streamlit-dashboard
+src/                           # Berekeningen en schermen
+data/all_matches.json          # Actieve wedstrijddata
+sync_with_playwright.py        # Automatische gegevenssynchronisatie
+Start_ESHG.bat                 # Lokale Windows-startknop
+requirements.txt               # Python-dependencies
+.github/workflows/             # Automatische GitHub Actions
 ```
 
-`Start_ESHG.bat` is een lokale Windows-snelkoppeling, maar bevat nog
-gebruikersspecifieke paden en is daarom niet portable.
-
-## Data
-
-[`data/all_matches.json`](data/all_matches.json) is de huidige bron van waarheid
-voor de applicatie. De views laden en bewaren wedstrijdgegevens rechtstreeks
-via de functies in `src/calculations.py` en `src/views/input_view.py`.
-
-De map `oud/` bevat historische exports en oudere datastructuren. Deze bestanden
-worden niet door de dashboardcode geladen. Controleer vóór verwijdering of een
-bestand als archief nodig is.
-
-## Scripts en automatisering
-
-- [`sync_with_playwright.py`](sync_with_playwright.py) haalt periodiek actuele
-  uitslagen en locatiegegevens op. De GitHub Actions-workflow installeert
-  hiervoor aanvullend Playwright en Chromium.
-- [`seed_poule.py`](seed_poule.py) is een eenmalig/importscript voor een
-  `Uitslagen.csv`-bestand. Het huidige script verwacht dat bestand in de
-  hoofdmap; de bewaarde CSV staat momenteel onder `oud/`.
-
-Deze losse scripts kunnen later zonder gedragswijziging naar een `scripts/`
-map worden verplaatst. Dat moet dan gelijktijdig worden aangepast in
-`.github/workflows/sync.scores.yml` en in de relatieve bestandspaden van de
-scripts.
-
-## Dependencies structureren
-
-De dashboarddependencies staan in [`requirements.txt`](requirements.txt).
-Playwright en `requests` worden nu alleen door de synchronisatieworkflow
-geïnstalleerd, omdat ze niet nodig zijn om het dashboard lokaal te draaien.
-Een volgende gecontroleerde stap is het scheiden van runtime- en
-automatiseringsdependencies, bijvoorbeeld `requirements-dev.txt` of een
-afzonderlijk `requirements-sync.txt`. Pas daarna moet de workflow naar dat
-bestand verwijzen; voorkom dubbele of tegenstrijdige dependency-lijsten.
-
-## Devcontainer
-
-De configuratie in [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)
-gebruikt Python 3.11 en start Streamlit automatisch na attach. De configuratie
-verwijst nog naar een ontbrekende `README.md` (dit bestand lost dat op) en
-optioneel naar `packages.txt`. Ook installeert zij `streamlit` los naast
-`requirements.txt`. Dat kan later worden vereenvoudigd door alle Python-pakketten
-uitsluitend via `requirements.txt` te installeren en alleen bestaande optionele
-bestanden conditioneel te gebruiken.
-
-## Data-opslag centraliseren
-
-De applicatie gebruikt momenteel al één actieve dataset:
-`data/all_matches.json`. De historische bestanden onder `oud/` en de
-import-/synchronisatiescripts gebruiken echter verschillende formaten en
-relatieve paden. Een veilige vervolgstap is een kleine data-laag met één
-absolute projectroot, één schema en expliciete import/exportfuncties. Migreer
-oude bestanden eerst naar een aparte archief- of importmap en verwijder niets
-voordat de inhoud en herkomst zijn gecontroleerd.
+Veel plezier ermee. En onthoud: een goede ELO-rating is mooi, maar drie punten bij de MOTM zijn beter
