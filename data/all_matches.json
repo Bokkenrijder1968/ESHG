@@ -1254,16 +1254,65 @@
     "datum": "2026-11-22",
     "thuis": "Den Bosch H5",
     "uit": "Don Quishoot H3",
-    "score_thuis": null,
-    "score_uit": null,
-    "gespeeld": false,
-    "resultaat": "Gepland",
-    "punten": 0,
-    "kwarten_bijgehouden": false,
-    "kwarten": null,
-    "corners_bijgehouden": false,
-    "corners": null,
-    "goals": [],
+    "score_thuis": 0,
+    "score_uit": 6,
+    "gespeeld": true,
+    "resultaat": "W",
+    "punten": 3,
+    "kwarten_bijgehouden": true,
+    "kwarten": {
+      "eshg": [
+        2,
+        0,
+        1,
+        3
+      ],
+      "tegenstander": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "corners_bijgehouden": true,
+    "corners": {
+      "voor_totaal": 3,
+      "voor_gescoord": 0,
+      "tegen_totaal": 3,
+      "tegen_gescoord": 0
+    },
+    "goals": [
+      {
+        "maker": "Kliko",
+        "assist": "Tito",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Dobby",
+        "assist": "Maarten",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Schenk",
+        "assist": null,
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Dobby",
+        "assist": "Padt",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Dobby",
+        "assist": "Kliko",
+        "type": "Veldgoal"
+      },
+      {
+        "maker": "Maarten",
+        "assist": "Joep",
+        "type": "Veldgoal"
+      }
+    ],
     "notities": {
       "tactiek": "",
       "evaluatie": ""
@@ -1277,7 +1326,9 @@
     "veld_type": "Zandveld",
     "locatie_accommodatie": "Oosterplas",
     "locatie_adres": "Oosterplasweg 35, 5215HT Den Bosch",
-    "veld_naam": "KGZ 6"
+    "veld_naam": "KGZ 6",
+    "tegenstander": "Den Bosch H5",
+    "locatie": "Uit"
   },
   {
     "match_id": "poule_10_2026-11-22_Warande_H3_Helmond_H4",
@@ -1307,9 +1358,9 @@
     "datum": "2026-11-22",
     "thuis": "Hopbel H2-O",
     "uit": "Push H4",
-    "score_thuis": null,
-    "score_uit": null,
-    "gespeeld": false,
+    "score_thuis": 1,
+    "score_uit": 2,
+    "gespeeld": true,
     "resultaat": null,
     "punten": null,
     "kwarten_bijgehouden": false,
@@ -1351,9 +1402,9 @@
     "datum": "2026-11-22",
     "thuis": "Shot H2-O",
     "uit": "Were Di H4",
-    "score_thuis": null,
-    "score_uit": null,
-    "gespeeld": false,
+    "score_thuis": 2,
+    "score_uit": 2,
+    "gespeeld": true,
     "resultaat": null,
     "punten": null,
     "kwarten_bijgehouden": false,
