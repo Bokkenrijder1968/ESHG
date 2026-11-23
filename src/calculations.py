@@ -549,6 +549,205 @@ def calculate_standings(matches: list[dict]) -> pd.DataFrame:
     frame.insert(0, "Pos", range(1, len(frame) + 1))
     return frame
 
+def calculate_points_progression(
+    matches: list[dict[str, Any]], mode: str = "matches"
+) -> pd.DataFrame:
+    """Bereken het cumulatieve puntenverloop per team op basis van gespeelde duels ('matches') of speelronde ('rounds')."""
+    team_names: dict[str, str] = {}
+    played_entries: list[dict[str, Any]] = []
+
+    for index, match in enumerate(matches):
+        home = str(match.get("thuis", "")).strip()
+        away = str(match.get("uit", "")).strip()
+        home_key = _team_key(home)
+        away_key = _team_key(away)
+        if not home_key or not away_key:
+            continue
+
+        team_names.setdefault(home_key, home)
+        team_names.setdefault(away_key, away)
+
+        scores = _valid_played_score(match)
+        if scores is None:
+            continue
+
+        raw_round = match.get("ronde")
+        round_num: int | None = None
+        if raw_round is not None and not isinstance(raw_round, bool):
+            try:
+                round_num = int(raw_round)
+            except (TypeError, ValueError):
+                round_num = None
+
+        played_entries.append(
+            {
+                "datum": _normalize_date(match.get("datum")),
+                "ronde": round_num,
+                "index": index,
+                "home_key": home_key,
+                "away_key": away_key,
+                "home_name": home,
+                "away_name": away,
+                "home_score": scores[0],
+                "away_score": scores[1],
+            }
+        )
+
+    if not played_entries or not team_names:
+        return pd.DataFrame(
+            columns=["Stap", "Team", "Positie", "Punten", "Ronde_Punten", "Gespeeld", "Detail"]
+        )
+
+    # Sorteer teams op actuele ranglijstpositie
+    standings = calculate_standings(matches)
+    positions_by_key: dict[str, int] = {}
+    ordered_keys: list[str] = []
+    for _, row in standings.iterrows():
+        key = _team_key(str(row["Team"]))
+        if key in team_names:
+            positions_by_key[key] = int(row["Pos"])
+            ordered_keys.append(key)
+
+    for key in sorted(team_names, key=lambda k: team_names[k].casefold()):
+        if key not in positions_by_key:
+            positions_by_key[key] = len(ordered_keys) + 1
+            ordered_keys.append(key)
+
+    # Sorteer gespeelde wedstrijden chronologisch
+    played_entries.sort(
+        key=lambda item: (
+            item["datum"],
+            item["ronde"] if item["ronde"] is not None else 999,
+            item["index"],
+        )
+    )
+
+    rows: list[dict[str, Any]] = []
+
+    if mode == "rounds":
+        valid_rounds = [
+            entry["ronde"] for entry in played_entries if entry["ronde"] is not None
+        ]
+        if not valid_rounds:
+            return pd.DataFrame(
+                columns=["Stap", "Team", "Positie", "Punten", "Ronde_Punten", "Gespeeld", "Detail"]
+            )
+        max_round = max(valid_rounds)
+
+        team_round_events: dict[tuple[str, int], list[dict[str, Any]]] = {}
+        for entry in played_entries:
+            rnd = entry["ronde"]
+            if rnd is None:
+                continue
+            h_score, a_score = entry["home_score"], entry["away_score"]
+            h_pts = 3 if h_score > a_score else (1 if h_score == a_score else 0)
+            a_pts = 3 if a_score > h_score else (1 if a_score == h_score else 0)
+
+            team_round_events.setdefault((entry["home_key"], rnd), []).append(
+                {
+                    "pts": h_pts,
+                    "detail": f"+{h_pts} pt (vs {entry['away_name']} {h_score}-{a_score})",
+                }
+            )
+            team_round_events.setdefault((entry["away_key"], rnd), []).append(
+                {
+                    "pts": a_pts,
+                    "detail": f"+{a_pts} pt (@ {entry['home_name']} {a_score}-{h_score})",
+                }
+            )
+
+        for team_key in ordered_keys:
+            team_label = team_names[team_key]
+            pos = positions_by_key[team_key]
+            cumulative = 0
+            rows.append(
+                {
+                    "Stap": 0,
+                    "Team": team_label,
+                    "Positie": pos,
+                    "Punten": 0,
+                    "Ronde_Punten": 0,
+                    "Gespeeld": True,
+                    "Detail": "Start seizoen",
+                }
+            )
+            for rnd in range(1, max_round + 1):
+                events = team_round_events.get((team_key, rnd), [])
+                if events:
+                    gained = sum(ev["pts"] for ev in events)
+                    cumulative += gained
+                    detail = " & ".join(ev["detail"] for ev in events)
+                    played_flag = True
+                else:
+                    gained = 0
+                    detail = "Vrij / nog niet gespeeld (+0 pt)"
+                    played_flag = False
+
+                rows.append(
+                    {
+                        "Stap": rnd,
+                        "Team": team_label,
+                        "Positie": pos,
+                        "Punten": cumulative,
+                        "Ronde_Punten": gained,
+                        "Gespeeld": played_flag,
+                        "Detail": detail,
+                    }
+                )
+    else:
+        # Standaard: per daadwerkelijk gespeelde wedstrijd (GS)
+        team_matches: dict[str, list[dict[str, Any]]] = {key: [] for key in ordered_keys}
+        for entry in played_entries:
+            h_score, a_score = entry["home_score"], entry["away_score"]
+            h_pts = 3 if h_score > a_score else (1 if h_score == a_score else 0)
+            a_pts = 3 if a_score > h_score else (1 if a_score == h_score else 0)
+
+            team_matches[entry["home_key"]].append(
+                {
+                    "pts": h_pts,
+                    "detail": f"+{h_pts} pt (vs {entry['away_name']} {h_score}-{a_score})",
+                }
+            )
+            team_matches[entry["away_key"]].append(
+                {
+                    "pts": a_pts,
+                    "detail": f"+{a_pts} pt (@ {entry['home_name']} {a_score}-{h_score})",
+                }
+            )
+
+        for team_key in ordered_keys:
+            team_label = team_names[team_key]
+            pos = positions_by_key[team_key]
+            cumulative = 0
+            rows.append(
+                {
+                    "Stap": 0,
+                    "Team": team_label,
+                    "Positie": pos,
+                    "Punten": 0,
+                    "Ronde_Punten": 0,
+                    "Gespeeld": True,
+                    "Detail": "Start seizoen",
+                }
+            )
+            for match_num, ev in enumerate(team_matches[team_key], start=1):
+                cumulative += ev["pts"]
+                rows.append(
+                    {
+                        "Stap": match_num,
+                        "Team": team_label,
+                        "Positie": pos,
+                        "Punten": cumulative,
+                        "Ronde_Punten": ev["pts"],
+                        "Gespeeld": True,
+                        "Detail": ev["detail"],
+                    }
+                )
+
+    return pd.DataFrame(
+        rows,
+        columns=["Stap", "Team", "Positie", "Punten", "Ronde_Punten", "Gespeeld", "Detail"],
+    )
 
 def calculate_elo_ratings(
     matches: list[dict], k_factor: int = 32, start_elo: float = 1500.0
