@@ -1,21 +1,19 @@
-import math
-from typing import Any
-
-import pandas as pd
-import streamlit as st # type: ignore[import-not-found]
-
+import re
 from datetime import datetime, timedelta
+from typing import Any
 from urllib.parse import quote
 
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st  # type: ignore[import-not-found]
+
 from src.calculations import (
-    _common_opponents_expected_diff,
-    _team_recent_averages,
-    _team_match_result,
     get_all_matches,
     get_common_opponents_comparison,
     get_head_to_head,
-    get_opponents_by_schedule,
     get_opponent_form,
+    get_opponents_by_schedule,
+    predict_match_outcome,
 )
 from src.constants import OPPONENTS, REISTIJDEN_MINUTEN
 
@@ -23,37 +21,13 @@ from src.constants import OPPONENTS, REISTIJDEN_MINUTEN
 _ESHG_TEAM = "Don Quishoot H3"
 _RESULT_COLORS = {"W": "#198754", "G": "#6c757d", "V": "#dc3545"}
 
-
-def _team_averages(
-    matches: list[dict[str, Any]], team: str
-) -> tuple[float, float, int]:
-    played = [
-        result
-        for match in matches
-        if (result := _team_match_result(match, team)) is not None
-    ]
-    if not played:
-        return 0.0, 0.0, 0
-
-    return (
-        sum(match["doelpunten_voor"] for match in played) / len(played),
-        sum(match["doelpunten_tegen"] for match in played) / len(played),
-        len(played),
-    )
-
-
-def _poisson_probabilities(expected_goals: float) -> list[float]:
-    max_goals = min(
-        100,
-        max(12, math.ceil(expected_goals + 8 * math.sqrt(expected_goals + 1))),
-    )
-    probabilities = [math.exp(-expected_goals)]
-    for goals in range(1, max_goals + 1):
-        probabilities.append(
-            probabilities[-1] * expected_goals / goals
-        )
-    return probabilities
-
+_MODEL_OPTIONS = {
+    "ELO + Aanval/Verdediging (Aanbevolen)": "elo",
+    "Gecombineerd Ensemble": "ensemble",
+    "Recente Vorm (Laatste 3)": "recent",
+    "Gedeelde Tegenstanders": "gedeeld",
+    "Seizoensgemiddelde": "seizoen",
+}
 
 
 def _render_match_location(
@@ -91,66 +65,63 @@ def _render_match_location(
         col1, col2, col3 = st.columns(3)
         col1.metric("Type wedstrijd", "Thuis (Eindhoven)")
         col2.metric("Aanvang", wedstrijd_tijd if wedstrijd_tijd else "Tijd volgt")
-        
+
         if wedstrijd_tijd:
             aanwezig, _ = bereken_tijdschema(wedstrijd_tijd, reistijd_minuten=0, buffer_minuten=0)
             col3.metric("Aanwezig op TU/e (-45m)", aanwezig)
         else:
             col3.metric("Aanwezig op TU/e", "Tijd volgt")
-            
+
         st.caption(f"**Veld:** {veld_naam} ({veld_type}) | **Locatie:** {accommodatie}")
     else:
-        # Uitwedstrijd: haal vaste reistijd op
         key = normalize_key(opponent)
-        reistijd = REISTIJDEN_MINUTEN.get(key, 35)  # 35 min fallback
-        
+        reistijd = REISTIJDEN_MINUTEN.get(key, 35)
+
         if wedstrijd_tijd:
             aanwezig, verzamelen = bereken_tijdschema(
                 wedstrijd_tijd, reistijd_minuten=reistijd, buffer_minuten=5
             )
         else:
             aanwezig, verzamelen = None, None
-        
+
         col1, col2, col3 = st.columns(3)
         col1.metric("🚗 Reistijd auto", f"~{reistijd} min")
         col2.metric("🏟️ Aanwezig bij club (-45m)", aanwezig if aanwezig else "Tijd volgt")
         col3.metric("📍 Verzamelen Nassaustraat", verzamelen if verzamelen else "Tijd volgt")
-        
+
         st.caption(
             f"**Veld:** {veld_naam} ({veld_type}) | "
             f"**Accommodatie:** {accommodatie} | "
             f"*(Inclusief 5 min buffer tassen/instappen)*"
         )
 
-    # Google Maps Kaart en navigatielink
     if adres:
         render_google_maps_embed(adres, hoogte=260)
-        
+
         google_maps_url = f"https://www.google.com/maps/search/?api=1&query={quote(adres)}"
-        st.link_button("🗺️ Open in Google Maps Navigatie", google_maps_url, width='stretch')
+        st.link_button("🗺️ Open in Google Maps Navigatie", google_maps_url, width="stretch")
     else:
         st.info("Locatieadres nog niet bekend voor deze wedstrijd.")
 
 
 def normalize_key(name: str) -> str:
     """Maakt van bijv. 'Warande H3' -> 'warandeh3' voor lookup."""
-    import re
     return re.sub(r"[\s\-_]+", "", name or "").lower()
 
+
 def bereken_tijdschema(wedstrijd_tijd_str: str, reistijd_minuten: int, buffer_minuten: int = 5):
-    """
-    Berekent aanwezigheid (T - 45 min) en verzameltijd (Aanwezig - reistijd - buffer).
-    """
+    """Berekent aanwezigheid (T - 45 min) en verzameltijd (Aanwezig - reistijd - buffer)."""
     if not wedstrijd_tijd_str:
         return None, None
     try:
         start_dt = datetime.strptime(wedstrijd_tijd_str, "%H:%M")
         aanwezig_dt = start_dt - timedelta(minutes=45)
         verzamelen_dt = aanwezig_dt - timedelta(minutes=reistijd_minuten + buffer_minuten)
-        
+
         return aanwezig_dt.strftime("%H:%M"), verzamelen_dt.strftime("%H:%M")
     except ValueError:
         return None, None
+
 
 def render_google_maps_embed(adres: str, hoogte: int = 300):
     """Toont een interactieve Google Maps kaart zonder API key."""
@@ -158,7 +129,7 @@ def render_google_maps_embed(adres: str, hoogte: int = 300):
         return
     encoded_addr = quote(adres)
     embed_url = f"https://maps.google.com/maps?q={encoded_addr}&t=&z=15&ie=UTF8&iwloc=&output=embed"
-    
+
     st.iframe(
         f"""
         <iframe 
@@ -176,92 +147,126 @@ def render_google_maps_embed(adres: str, hoogte: int = 300):
     )
 
 
+def _render_probability_bar(win_eshg: float, draw: float, win_opp: float, opponent: str) -> None:
+    fig = go.Figure()
+    segments = [
+        (f"Winst {_ESHG_TEAM}", win_eshg * 100, "#2E7D32"),
+        ("Gelijkspel", draw * 100, "#64748B"),
+        (f"Winst {opponent}", win_opp * 100, "#DC2626"),
+    ]
+    for label, pct, color in segments:
+        fig.add_trace(
+            go.Bar(
+                y=["Kans"],
+                x=[pct],
+                name=label,
+                orientation="h",
+                marker={"color": color},
+                text=[f"{pct:.0f}%" if pct >= 8 else ""],
+                textposition="inside",
+                insidetextanchor="middle",
+                textfont={"color": "white", "size": 13},
+                hovertemplate=f"<b>{label}</b>: %{{x:.1f}}%<extra></extra>",
+            )
+        )
+
+    fig.update_layout(
+        barmode="stack",
+        height=72,
+        margin={"l": 0, "r": 0, "t": 6, "b": 6},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        showlegend=False,
+        xaxis={"range": [0, 100], "visible": False, "fixedrange": True},
+        yaxis={"visible": False, "fixedrange": True},
+    )
+    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+
+
 def _render_prediction(matches: list[dict[str, Any]], opponent: str) -> None:
-    model = st.radio(
+    selected_label = st.radio(
         "Rekenmodel",
-        [
-            "Seizoensgemiddelde (Standaard)",
-            "Recente Vorm (Laatste 3 wedstrijden)",
-            "Gedeelde Tegenstanders",
-            "Gecombineerd Ensemble",
-        ],
+        list(_MODEL_OPTIONS.keys()),
+        index=0,
         horizontal=True,
         key="matchup_prediction_model",
     )
-    eshg_scored, eshg_conceded, eshg_played = _team_averages(matches, _ESHG_TEAM)
-    opponent_scored, opponent_conceded, opponent_played = _team_averages(
-        matches, opponent
-    )
-    if not eshg_played or not opponent_played:
-        st.info("Er zijn nog onvoldoende gespeelde wedstrijden voor een voorspelling.")
+    model_code = _MODEL_OPTIONS[selected_label]
+    prediction = predict_match_outcome(matches, _ESHG_TEAM, opponent, model_type=model_code)
+
+    if prediction is None:
+        st.info("Er zijn nog onvoldoende gespeelde competitiewedstrijden voor een statistische voorspelling.")
         return
 
-    seasonal_expected_eshg = (eshg_scored + opponent_conceded) / 2
-    seasonal_expected_opponent = (opponent_scored + eshg_conceded) / 2
-    recent_eshg_scored, recent_eshg_conceded = _team_recent_averages(
-        matches, _ESHG_TEAM
-    )
-    recent_opponent_scored, recent_opponent_conceded = _team_recent_averages(
-        matches, opponent
-    )
-    recent_expected_eshg = (
-        recent_eshg_scored + recent_opponent_conceded
-    ) / 2
-    recent_expected_opponent = (
-        recent_opponent_scored + recent_eshg_conceded
-    ) / 2
-    relative_difference = _common_opponents_expected_diff(
-        matches, _ESHG_TEAM, opponent
-    )
-    common_expected_eshg = max(0.0, 2.5 + relative_difference / 2)
-    common_expected_opponent = max(0.0, 2.5 - relative_difference / 2)
+    win_eshg = float(prediction["win_a"])
+    draw = float(prediction["draw"])
+    win_opp = float(prediction["win_b"])
 
-    if model == "Recente Vorm (Laatste 3 wedstrijden)":
-        expected_eshg = recent_expected_eshg
-        expected_opponent = recent_expected_opponent
-    elif model == "Gedeelde Tegenstanders":
-        expected_eshg = common_expected_eshg
-        expected_opponent = common_expected_opponent
-    elif model == "Gecombineerd Ensemble":
-        expected_eshg = (
-            0.40 * common_expected_eshg
-            + 0.35 * recent_expected_eshg
-            + 0.25 * seasonal_expected_eshg
-        )
-        expected_opponent = (
-            0.40 * common_expected_opponent
-            + 0.35 * recent_expected_opponent
-            + 0.25 * seasonal_expected_opponent
-        )
-    else:
-        expected_eshg = seasonal_expected_eshg
-        expected_opponent = seasonal_expected_opponent
+    c1, c2, c3 = st.columns(3)
+    c1.metric(f"Winst {_ESHG_TEAM}", f"{win_eshg:.0%}")
+    c2.metric("Gelijkspel", f"{draw:.0%}")
+    c3.metric(f"Winst {opponent}", f"{win_opp:.0%}")
 
-    eshg_probabilities = _poisson_probabilities(expected_eshg)
-    opponent_probabilities = _poisson_probabilities(expected_opponent)
-    win_probability = sum(
-        eshg_chance * sum(opponent_probabilities[:goals])
-        for goals, eshg_chance in enumerate(eshg_probabilities)
-    )
-    draw_probability = sum(
-        eshg_chance * opponent_probabilities[goals]
-        for goals, eshg_chance in enumerate(eshg_probabilities)
-        if goals < len(opponent_probabilities)
-    )
-    loss_probability = max(0.0, 1 - win_probability - draw_probability)
-    st.metric(
-        "Verwachte uitslag",
-        f"{round(expected_eshg)} - {round(expected_opponent)}",
-        help=(
-            f"Doelpuntenverwachting: ESHG {expected_eshg:.1f} – "
-            f"{opponent} {expected_opponent:.1f}"
-        ),
-    )
+    _render_probability_bar(win_eshg, draw, win_opp, opponent)
+
+    league_avg = float(prediction["league_avg"])
+    prof_a = prediction["profile_a"]
+    prof_b = prediction["profile_b"]
+
+    st.markdown(f"**Teamprofiel t.o.v. poulegemiddelde ({league_avg:.1f} goals/wedstrijd)**")
+    p_col1, p_col2 = st.columns(2)
+    with p_col1:
+        with st.container(border=True):
+            st.markdown(f"**{_ESHG_TEAM}** *({prof_a['gespeeld']} GS)*")
+            st.markdown(
+                f"⚽ **Aanval:** {prof_a['aanval_label']} — **{prof_a['voor_gem']:.1f}** voor/wedstrijd"
+            )
+            st.markdown(
+                f"🛡️ **Verdediging:** {prof_a['verdediging_label']} — **{prof_a['tegen_gem']:.1f}** tegen/wedstrijd"
+            )
+    with p_col2:
+        with st.container(border=True):
+            st.markdown(f"**{opponent}** *({prof_b['gespeeld']} GS)*")
+            st.markdown(
+                f"⚽ **Aanval:** {prof_b['aanval_label']} — **{prof_b['voor_gem']:.1f}** voor/wedstrijd"
+            )
+            st.markdown(
+                f"🛡️ **Verdediging:** {prof_b['verdediging_label']} — **{prof_b['tegen_gem']:.1f}** tegen/wedstrijd"
+            )
+
     st.caption(
-        f"Indicatieve kansen · model: {model} (Poisson-verdeling): "
-        f"ESHG winst {win_probability:.0%} · gelijk {draw_probability:.0%} · "
-        f"{opponent} winst {loss_probability:.0%}."
+        f"Spelbeeld: **{prediction['tempo_label']}** "
+        f"(verwachte doelpunten: ESHG {prediction['lambda_a']:.1f} – {opponent} {prediction['lambda_b']:.1f})."
     )
+
+    with st.expander("Onderliggende modeldetails & waarschijnlijkste uitslagen", expanded=False):
+        d1, d2 = st.columns(2)
+        with d1:
+            st.markdown("**ELO-krachtsverhouding**")
+            st.write(
+                f"- **{_ESHG_TEAM}:** {prediction['elo_a']:.0f}\n"
+                f"- **{opponent}:** {prediction['elo_b']:.0f}\n"
+                f"- **Verschil:** {prediction['elo_diff']:+.0f} ELO"
+            )
+        with d2:
+            st.markdown("**Top 3 meest waarschijnlijke uitslagen (Poisson)**")
+            for item in prediction["top_scores"]:
+                st.write(f"- **{item['score']}** ({item['kans']:.1%} kans)")
+
+
+def _format_h2h_cards(raw_cards: object) -> str:
+    if isinstance(raw_cards, str):
+        return raw_cards.strip()
+    if isinstance(raw_cards, list):
+        formatted = []
+        for item in raw_cards:
+            if isinstance(item, dict):
+                speler = str(item.get("speler", "")).strip()
+                k_type = str(item.get("type", "")).strip()
+                if speler and k_type:
+                    formatted.append(f"{speler} ({k_type})")
+        return ", ".join(formatted)
+    return ""
 
 
 def render_matchup_view() -> None:
@@ -380,12 +385,12 @@ def render_matchup_view() -> None:
             extra_stats = match.get("extra_stats", {})
             tactics = str(notes.get("tactiek", "")).strip()
             evaluation = str(notes.get("evaluatie", "")).strip()
-            cards = str(extra_stats.get("kaarten", "")).strip()
+            cards = _format_h2h_cards(extra_stats.get("kaarten"))
             substitutes = str(extra_stats.get("invallers", "")).strip()
             saved_notes = [
                 f"**Speelstijl (press / zone / corners):** {tactics}" if tactics else "",
                 f"**Leerpunten:** {evaluation}" if evaluation else "",
-                f"**Extra statistieken – kaarten:** {cards}" if cards else "",
+                f"**Kaarten:** {cards}" if cards else "",
                 f"**Invallers / afwezigen:** {substitutes}" if substitutes else "",
             ]
             note_text = "\n\n".join(note for note in saved_notes if note)

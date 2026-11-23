@@ -10,7 +10,9 @@ from src.views.simulation_view import render_simulation_view
 from src.views.table_view import render_table_view
 from src.views.trends_view import render_trends_view
 
-st.set_page_config(page_title="Don Quishoot H3 Manager", layout="wide", page_icon="🏑")
+st.set_page_config(page_title="ESHG H1", layout="wide", page_icon="🏑")
+
+st.markdown("# ESHG H1 Manager 🏑")
 
 tab_titles = [
     "📝 Wedstrijd Invoeren",

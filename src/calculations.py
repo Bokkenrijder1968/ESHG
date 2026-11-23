@@ -19,13 +19,13 @@ _PLAYER_STAT_COLUMNS = [
     "Positie",
     "Speler",
     "GS",
+    "Punten",
     "Goals",
-    "Assists",
-    "Totaal_G_A",
     "Veldgoals",
     "Strafcorners",
     "Strafballen",
-    "Punten",
+    "Assists",
+    "Totaal_G_A",
     "Kaarten",
 ]
 
@@ -37,7 +37,7 @@ def _load_json_records(path: Path) -> list[dict[str, Any]]:
         with path.open("r", encoding="utf-8") as file:
             records = json.load(file)
     except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"Wedstrijdenbestand kan niet worden gelezen ({path}): {error}") from error
+        raise ValueError(f"Bestand kan niet worden gelezen ({path}): {error}") from error
     return records if isinstance(records, list) else []
 
 
@@ -61,12 +61,12 @@ def _get_scoring_matches() -> list[dict[str, Any]]:
 
 def _match_has_result(match: dict[str, Any]) -> bool:
     """Controleert of een wedstrijd gespeeld is en een geldige uitslag heeft."""
-    if not match.get("gespeeld"):
-        return False
-    return (
-        _score(match.get("score_thuis")) is not None
-        and _score(match.get("score_uit")) is not None
-    )
+    if match.get("gespeeld"):
+        return (
+            _score(match.get("score_thuis")) is not None
+            and _score(match.get("score_uit")) is not None
+        )
+    return False
 
 
 def _goal_records(match: dict[str, Any]) -> list[dict[str, Any]]:
@@ -78,6 +78,21 @@ def _goal_records(match: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _person_name(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
+
+
+def _empty_player_stats() -> dict[str, int]:
+    return {
+        "GS": 0,
+        "Punten": 0,
+        "Goals": 0,
+        "Veldgoals": 0,
+        "Strafcorners": 0,
+        "Strafballen": 0,
+        "Assists": 0,
+        "Groen": 0,
+        "Geel": 0,
+        "Rood": 0,
+    }
 
 
 def _normalize_date(value: object) -> str:
@@ -115,7 +130,7 @@ def _score(value: object) -> int | None:
     return score
 
 
-def _valid_played_score(match: dict) -> tuple[int, int] | None:
+def _valid_played_score(match: dict[str, Any]) -> tuple[int, int] | None:
     if match.get("gespeeld") is not True:
         return None
     home_score = _score(match.get("score_thuis"))
@@ -123,21 +138,6 @@ def _valid_played_score(match: dict) -> tuple[int, int] | None:
     if home_score is None or away_score is None:
         return None
     return home_score, away_score
-
-
-def _empty_player_stats() -> dict[str, int]:
-    return {
-        "GS": 0,
-        "Punten": 0,
-        "Goals": 0,
-        "Veldgoals": 0,
-        "Strafcorners": 0,
-        "Strafballen": 0,
-        "Assists": 0,
-        "Groen": 0,
-        "Geel": 0,
-        "Rood": 0,
-    }
 
 
 def _card_records(match: dict[str, Any]) -> list[dict[str, str]]:
@@ -196,7 +196,6 @@ def _match_present_players(match: dict[str, Any], squad_set: set[str]) -> set[st
             if (name := _person_name(item)) and name in squad_set
         }
 
-    # Terugvaloptie voor oudere wedstrijden zonder opgeslagen aanwezigheidslijst
     inferred: set[str] = set()
     for goal in _goal_records(match):
         maker = _person_name(goal.get("maker"))
@@ -284,6 +283,36 @@ def calculate_player_stats() -> pd.DataFrame:
     return frame[_PLAYER_STAT_COLUMNS]
 
 
+def get_top_duos() -> pd.DataFrame:
+    """Return up to five most frequent assist-to-scorer combinations."""
+    duo_counts: dict[tuple[str, str], int] = {}
+    for match in _get_scoring_matches():
+        for goal in _goal_records(match):
+            assist = _person_name(goal.get("assist"))
+            maker = _person_name(goal.get("maker"))
+            if (
+                not assist
+                or assist in ("Geen assist", _OWN_GOAL_LABEL)
+                or not maker
+                or maker == _OWN_GOAL_LABEL
+            ):
+                continue
+            duo = (assist, maker)
+            duo_counts[duo] = duo_counts.get(duo, 0) + 1
+
+    duos = sorted(
+        duo_counts.items(),
+        key=lambda item: (-item[1], item[0][0].casefold(), item[0][1].casefold()),
+    )[:5]
+    return pd.DataFrame(
+        [
+            {"Aangever": assist, "Afmaker": maker, "Aantal": count}
+            for (assist, maker), count in duos
+        ],
+        columns=["Aangever", "Afmaker", "Aantal"],
+    )
+
+
 def get_player_match_timeline(player: str) -> pd.DataFrame:
     """Return played matches where a player was present, including goals, assists, points, and cards."""
     squad_set = {p for p in PLAYERS if p != _OWN_GOAL_LABEL}
@@ -346,86 +375,6 @@ def get_player_match_timeline(player: str) -> pd.DataFrame:
     return pd.DataFrame(
         timeline,
         columns=["Datum", "Tegenstander", "Uitslag", "Punten", "Bijdrage", "Kaart"],
-    )
-
-
-def get_pitchers() -> list[dict[str, Any]]:
-    """Laad alle geregistreerde pitchers uit data/pitchers.json."""
-    return _load_json_records(_PITCHERS_FILE)
-
-
-def _save_pitchers(records: list[dict[str, Any]]) -> None:
-    try:
-        _PITCHERS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with _PITCHERS_FILE.open("w", encoding="utf-8") as file:
-            json.dump(records, file, ensure_ascii=False, indent=2)
-            file.write("\n")
-    except OSError as error:
-        raise ValueError(f"Pitchers konden niet worden opgeslagen: {error}") from error
-
-
-def add_pitcher_record(speler: str, datum: str, aantal: int, reden: str) -> None:
-    """Voeg een nieuw openstaand pitcher-item toe."""
-    records = get_pitchers()
-    records.append(
-        {
-            "id": f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{len(records)}",
-            "speler": speler.strip(),
-            "datum": _normalize_date(datum),
-            "aantal": max(1, int(aantal)),
-            "reden": reden.strip() or "Geen reden opgegeven",
-            "gehaald": False,
-            "gehaald_op": None,
-        }
-    )
-    _save_pitchers(records)
-
-
-def set_pitcher_collected(pitcher_id: str, collected: bool) -> None:
-    """Markeer een pitcher-item als geïnd/gehaald of zet terug naar openstaand."""
-    records = get_pitchers()
-    today_str = datetime.now().date().isoformat()
-    for item in records:
-        if item.get("id") == pitcher_id:
-            item["gehaald"] = bool(collected)
-            item["gehaald_op"] = today_str if collected else None
-            break
-    _save_pitchers(records)
-
-
-def delete_pitcher_record(pitcher_id: str) -> None:
-    """Verwijder een pitcher-item definitief."""
-    records = [item for item in get_pitchers() if item.get("id") != pitcher_id]
-    _save_pitchers(records)
-
-
-def get_top_duos() -> pd.DataFrame:
-    """Return up to five most frequent assist-to-scorer combinations."""
-    duo_counts: dict[tuple[str, str], int] = {}
-    for match in _get_scoring_matches():
-        for goal in _goal_records(match):
-            assist = _person_name(goal.get("assist"))
-            maker = _person_name(goal.get("maker"))
-            if (
-                not assist
-                or assist in ("Geen assist", _OWN_GOAL_LABEL)
-                or not maker
-                or maker == _OWN_GOAL_LABEL
-            ):
-                continue
-            duo = (assist, maker)
-            duo_counts[duo] = duo_counts.get(duo, 0) + 1
-
-    duos = sorted(
-        duo_counts.items(),
-        key=lambda item: (-item[1], item[0][0].casefold(), item[0][1].casefold()),
-    )[:5]
-    return pd.DataFrame(
-        [
-            {"Aangever": assist, "Afmaker": maker, "Aantal": count}
-            for (assist, maker), count in duos
-        ],
-        columns=["Aangever", "Afmaker", "Aantal"],
     )
 
 
@@ -655,7 +604,7 @@ def _common_opponents_expected_diff(
     return sum(relative_differences) / len(relative_differences)
 
 
-def calculate_standings(matches: list[dict]) -> pd.DataFrame:
+def calculate_standings(matches: list[dict[str, Any]]) -> pd.DataFrame:
     """Calculate team standings and sort by the KNHB ranking criteria."""
     standings: dict[str, dict[str, int | str]] = {}
 
@@ -687,7 +636,7 @@ def calculate_standings(matches: list[dict]) -> pd.DataFrame:
         home_standing = ensure_team(home)
         away_standing = ensure_team(away)
         home_score, away_score = scores
-        home_standing["GS"] += 1 # pyright: ignore[reportOperatorIssue] # type: ignore
+        home_standing["GS"] = int(home_standing["GS"]) + 1
         away_standing["GS"] = int(away_standing["GS"]) + 1
         home_standing["DV"] = int(home_standing["DV"]) + home_score
         home_standing["DT"] = int(home_standing["DT"]) + away_score
@@ -727,6 +676,7 @@ def calculate_standings(matches: list[dict]) -> pd.DataFrame:
     )
     frame.insert(0, "Pos", range(1, len(frame) + 1))
     return frame
+
 
 def calculate_points_progression(
     matches: list[dict[str, Any]], mode: str = "matches"
@@ -777,7 +727,6 @@ def calculate_points_progression(
             columns=["Stap", "Team", "Positie", "Punten", "Ronde_Punten", "Gespeeld", "Detail"]
         )
 
-    # Sorteer teams op actuele ranglijstpositie
     standings = calculate_standings(matches)
     positions_by_key: dict[str, int] = {}
     ordered_keys: list[str] = []
@@ -792,7 +741,6 @@ def calculate_points_progression(
             positions_by_key[key] = len(ordered_keys) + 1
             ordered_keys.append(key)
 
-    # Sorteer gespeelde wedstrijden chronologisch
     played_entries.sort(
         key=lambda item: (
             item["datum"],
@@ -874,7 +822,6 @@ def calculate_points_progression(
                     }
                 )
     else:
-        # Standaard: per daadwerkelijk gespeelde wedstrijd (GS)
         team_matches: dict[str, list[dict[str, Any]]] = {key: [] for key in ordered_keys}
         for entry in played_entries:
             h_score, a_score = entry["home_score"], entry["away_score"]
@@ -928,8 +875,9 @@ def calculate_points_progression(
         columns=["Stap", "Team", "Positie", "Punten", "Ronde_Punten", "Gespeeld", "Detail"],
     )
 
+
 def calculate_elo_ratings(
-    matches: list[dict], k_factor: int = 32, start_elo: float = 1500.0
+    matches: list[dict[str, Any]], k_factor: int = 32, start_elo: float = 1500.0
 ) -> pd.DataFrame:
     """Calculate current team ELO ratings and played/remaining schedule strength."""
     team_names: dict[str, str] = {}
@@ -1031,9 +979,185 @@ def calculate_elo_ratings(
     ).reset_index(drop=True)
 
 
+def _poisson_pmf_list(expected_goals: float, max_goals: int = 16) -> list[float]:
+    probs = [math.exp(-expected_goals)]
+    for goals in range(1, max_goals + 1):
+        probs.append(probs[-1] * expected_goals / goals)
+    total = sum(probs)
+    return [p / total for p in probs] if total > 0 else probs
+
+
+def predict_match_outcome(
+    matches: list[dict[str, Any]],
+    team_a: str,
+    team_b: str,
+    model_type: str = "elo",
+) -> dict[str, Any] | None:
+    """Voorspel winkansen (W/G/V), teamprofielen en meest waarschijnlijke uitslagen tussen twee teams."""
+    team_a_key = _team_key(team_a)
+    team_b_key = _team_key(team_b)
+
+    team_goals_for: dict[str, list[int]] = {}
+    team_goals_against: dict[str, list[int]] = {}
+
+    for match in matches:
+        home_key = _team_key(str(match.get("thuis", "")).strip())
+        away_key = _team_key(str(match.get("uit", "")).strip())
+        if not home_key or not away_key or home_key == away_key:
+            continue
+        team_goals_for.setdefault(home_key, [])
+        team_goals_for.setdefault(away_key, [])
+        team_goals_against.setdefault(home_key, [])
+        team_goals_against.setdefault(away_key, [])
+
+        scores = _valid_played_score(match)
+        if scores is not None:
+            team_goals_for[home_key].append(scores[0])
+            team_goals_against[home_key].append(scores[1])
+            team_goals_for[away_key].append(scores[1])
+            team_goals_against[away_key].append(scores[0])
+
+    played_a = len(team_goals_for.get(team_a_key, []))
+    played_b = len(team_goals_for.get(team_b_key, []))
+    if played_a == 0 or played_b == 0:
+        return None
+
+    all_goals = [g for goals in team_goals_for.values() for g in goals]
+    league_avg = sum(all_goals) / len(all_goals) if all_goals else 2.5
+
+    raw_a_for = sum(team_goals_for[team_a_key]) / played_a
+    raw_a_against = sum(team_goals_against[team_a_key]) / played_a
+    raw_b_for = sum(team_goals_for[team_b_key]) / played_b
+    raw_b_against = sum(team_goals_against[team_b_key]) / played_b
+
+    # 1. Seizoensgemiddelde
+    seasonal_a = (raw_a_for + raw_b_against) / 2.0
+    seasonal_b = (raw_b_for + raw_a_against) / 2.0
+
+    # 2. Recente vorm (laatste 3)
+    rec_a_for, rec_a_against = _team_recent_averages(matches, team_a, n=3)
+    rec_b_for, rec_b_against = _team_recent_averages(matches, team_b, n=3)
+    recent_a = (rec_a_for + rec_b_against) / 2.0
+    recent_b = (rec_b_for + rec_a_against) / 2.0
+
+    # 3. Gedeelde tegenstanders
+    rel_diff = _common_opponents_expected_diff(matches, team_a, team_b)
+    common_a = max(0.2, league_avg + rel_diff / 2.0)
+    common_b = max(0.2, league_avg - rel_diff / 2.0)
+
+    # 4. ELO + Bayesian gedempte aanval/verdediging
+    elo_df = calculate_elo_ratings(matches)
+    elo_dict = {
+        _team_key(str(row["Team"])): float(row["ELO Rating"])
+        for _, row in elo_df.iterrows()
+    }
+    elo_a = elo_dict.get(team_a_key, 1500.0)
+    elo_b = elo_dict.get(team_b_key, 1500.0)
+    elo_diff = elo_a - elo_b
+
+    prior_weight = 4.0
+    shrunk_a_for = (sum(team_goals_for[team_a_key]) + prior_weight * league_avg) / (played_a + prior_weight)
+    shrunk_a_against = (sum(team_goals_against[team_a_key]) + prior_weight * league_avg) / (played_a + prior_weight)
+    shrunk_b_for = (sum(team_goals_for[team_b_key]) + prior_weight * league_avg) / (played_b + prior_weight)
+    shrunk_b_against = (sum(team_goals_against[team_b_key]) + prior_weight * league_avg) / (played_b + prior_weight)
+
+    base_a = (shrunk_a_for * shrunk_b_against) / league_avg if league_avg > 0 else shrunk_a_for
+    base_b = (shrunk_b_for * shrunk_a_against) / league_avg if league_avg > 0 else shrunk_b_for
+    elo_shift = elo_diff / 400.0
+    elo_lambda_a = max(0.2, base_a + elo_shift)
+    elo_lambda_b = max(0.2, base_b - elo_shift)
+
+    if model_type == "ensemble":
+        lambda_a = 0.45 * elo_lambda_a + 0.25 * common_a + 0.20 * recent_a + 0.10 * seasonal_a
+        lambda_b = 0.45 * elo_lambda_b + 0.25 * common_b + 0.20 * recent_b + 0.10 * seasonal_b
+    elif model_type == "recent":
+        lambda_a, lambda_b = recent_a, recent_b
+    elif model_type == "gedeeld":
+        lambda_a, lambda_b = common_a, common_b
+    elif model_type == "seizoen":
+        lambda_a, lambda_b = seasonal_a, seasonal_b
+    else:
+        lambda_a, lambda_b = elo_lambda_a, elo_lambda_b
+
+    probs_a = _poisson_pmf_list(lambda_a)
+    probs_b = _poisson_pmf_list(lambda_b)
+
+    win_a = 0.0
+    draw = 0.0
+    win_b = 0.0
+    score_matrix: list[tuple[int, int, float]] = []
+
+    for ga, pa in enumerate(probs_a):
+        for gb, pb in enumerate(probs_b):
+            joint = pa * pb
+            score_matrix.append((ga, gb, joint))
+            if ga > gb:
+                win_a += joint
+            elif ga < gb:
+                win_b += joint
+            else:
+                draw += joint
+
+    score_matrix.sort(key=lambda item: item[2], reverse=True)
+    top_scores = [
+        {"score": f"{ga} - {gb}", "kans": prob}
+        for ga, gb, prob in score_matrix[:3]
+    ]
+
+    def _attack_profile(goals_for_avg: float) -> str:
+        if goals_for_avg >= league_avg + 0.45:
+            return "Veel scorend"
+        if goals_for_avg <= league_avg - 0.45:
+            return "Moeizaam scorend"
+        return "Gemiddeld scorend"
+
+    def _defense_profile(goals_against_avg: float) -> str:
+        if goals_against_avg <= league_avg - 0.45:
+            return "Solide verdediging"
+        if goals_against_avg >= league_avg + 0.45:
+            return "Kwetsbaar achterin"
+        return "Gemiddelde verdediging"
+
+    expected_total = lambda_a + lambda_b
+    if expected_total >= 2 * league_avg + 0.7:
+        tempo_label = "Doelpuntrijk duel verwacht"
+    elif expected_total <= 2 * league_avg - 0.7:
+        tempo_label = "Gesloten, doelpuntarm duel verwacht"
+    else:
+        tempo_label = "Gemiddeld aantal doelpunten verwacht"
+
+    return {
+        "win_a": win_a,
+        "draw": draw,
+        "win_b": win_b,
+        "lambda_a": lambda_a,
+        "lambda_b": lambda_b,
+        "elo_a": elo_a,
+        "elo_b": elo_b,
+        "elo_diff": elo_diff,
+        "league_avg": league_avg,
+        "tempo_label": tempo_label,
+        "top_scores": top_scores,
+        "profile_a": {
+            "gespeeld": played_a,
+            "voor_gem": raw_a_for,
+            "tegen_gem": raw_a_against,
+            "aanval_label": _attack_profile(raw_a_for),
+            "verdediging_label": _defense_profile(raw_a_against),
+        },
+        "profile_b": {
+            "gespeeld": played_b,
+            "voor_gem": raw_b_for,
+            "tegen_gem": raw_b_against,
+            "aanval_label": _attack_profile(raw_b_for),
+            "verdediging_label": _defense_profile(raw_b_against),
+        },
+    }
+
+
 def run_monte_carlo_simulation(
-    matches: list[dict], n_simulations: int = 1000, model_type: str = "standaard"
-) -> tuple[pd.DataFrame, dict]:
+    matches: list[dict[str, Any]], n_simulations: int = 1000, model_type: str = "standaard"
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Simulate the remaining pool fixtures and summarize final standings."""
     if n_simulations <= 0:
         raise ValueError("n_simulations moet groter zijn dan nul.")
@@ -1316,7 +1440,7 @@ def run_monte_carlo_simulation(
     }
 
 
-def simulate_standings(simulated_matches: list[dict]) -> pd.DataFrame:
+def simulate_standings(simulated_matches: list[dict[str, Any]]) -> pd.DataFrame:
     """Return standings after temporarily applying the simulated match results."""
     matches = get_all_matches()
     current_standings = calculate_standings(matches)
@@ -1338,6 +1462,247 @@ def simulate_standings(simulated_matches: list[dict]) -> pd.DataFrame:
         axis=1,
     ).astype("Int64")
     return virtual_standings
+
+
+def simulate_scenario_horizon(
+    matches: list[dict[str, Any]],
+    max_round: int,
+    fixed_results: list[dict[str, Any]],
+    simulate_unplayed: bool = True,
+    n_simulations: int = 1000,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Simuleer een scenario t/m `max_round`: deterministisch of met Poisson/ELO-simulatie van overige duels."""
+    current_standings = calculate_standings(matches)
+    current_positions = {
+        _team_key(str(row["Team"])): int(row["Pos"])
+        for _, row in current_standings.iterrows()
+    }
+
+    if not simulate_unplayed:
+        applied = [{**m, "gespeeld": True} for m in fixed_results]
+        virtual = calculate_standings(matches + applied)
+        virtual["Pos_Verschil"] = virtual.apply(
+            lambda row: (
+                current_positions[_team_key(str(row["Team"]))] - int(row["Pos"])
+                if _team_key(str(row["Team"])) in current_positions
+                else pd.NA
+            ),
+            axis=1,
+        ).astype("Int64")
+        return virtual, {"mode": "manual", "applied_count": len(applied)}
+
+    fixed_by_id: dict[str, dict[str, Any]] = {}
+    fixed_by_tuple: dict[tuple[str, str, int], dict[str, Any]] = {}
+    for item in fixed_results:
+        mid = str(item.get("match_id", "")).strip()
+        if mid:
+            fixed_by_id[mid] = item
+        rnd = int(item.get("ronde") or 0)
+        fixed_by_tuple[(_team_key(str(item.get("thuis", ""))), _team_key(str(item.get("uit", ""))), rnd)] = item
+
+    team_names: dict[str, str] = {}
+    played_matches: list[dict[str, Any]] = []
+    horizon_simulated_matches: list[dict[str, Any]] = []
+    hist_goals_for: dict[str, list[int]] = {}
+    hist_goals_against: dict[str, list[int]] = {}
+
+    for match in matches:
+        home = str(match.get("thuis", "")).strip()
+        away = str(match.get("uit", "")).strip()
+        home_key = _team_key(home)
+        away_key = _team_key(away)
+        if not home_key or not away_key or home_key == away_key:
+            continue
+
+        team_names.setdefault(home_key, home)
+        team_names.setdefault(away_key, away)
+        hist_goals_for.setdefault(home_key, [])
+        hist_goals_for.setdefault(away_key, [])
+        hist_goals_against.setdefault(home_key, [])
+        hist_goals_against.setdefault(away_key, [])
+
+        raw_round = match.get("ronde")
+        try:
+            rnd = int(raw_round) if raw_round is not None and not isinstance(raw_round, bool) else 999
+        except (TypeError, ValueError):
+            rnd = 999
+
+        scores = _valid_played_score(match)
+        if scores is not None:
+            played_matches.append(
+                {
+                    "thuis": home_key,
+                    "uit": away_key,
+                    "score_thuis": scores[0],
+                    "score_uit": scores[1],
+                }
+            )
+            hist_goals_for[home_key].append(scores[0])
+            hist_goals_against[home_key].append(scores[1])
+            hist_goals_for[away_key].append(scores[1])
+            hist_goals_against[away_key].append(scores[0])
+            continue
+
+        if match.get("gespeeld") is False and rnd <= max_round:
+            mid = str(match.get("match_id", "")).strip()
+            fixed = fixed_by_id.get(mid) or fixed_by_tuple.get((home_key, away_key, rnd))
+            if fixed is not None:
+                played_matches.append(
+                    {
+                        "thuis": home_key,
+                        "uit": away_key,
+                        "score_thuis": int(fixed["score_thuis"]),
+                        "score_uit": int(fixed["score_uit"]),
+                    }
+                )
+            else:
+                horizon_simulated_matches.append({"thuis": home_key, "uit": away_key})
+
+    # ELO + Bayesian shrunk aanval/verdediging op basis van werkelijk gespeelde wedstrijden
+    elo_df = calculate_elo_ratings(matches)
+    elo_dict = {
+        _team_key(str(row["Team"])): float(row["ELO Rating"])
+        for _, row in elo_df.iterrows()
+    }
+    all_goals = [g for goals in hist_goals_for.values() for g in goals]
+    league_avg = sum(all_goals) / len(all_goals) if all_goals else 2.5
+    prior_weight = 4.0
+
+    shrunk: dict[str, tuple[float, float]] = {}
+    for t_key in team_names:
+        n_p = len(hist_goals_for[t_key])
+        gf = sum(hist_goals_for[t_key])
+        ga = sum(hist_goals_against[t_key])
+        shrunk[t_key] = (
+            (gf + prior_weight * league_avg) / (n_p + prior_weight),
+            (ga + prior_weight * league_avg) / (n_p + prior_weight),
+        )
+
+    expected_goals: list[tuple[float, float]] = []
+    for m in horizon_simulated_matches:
+        hk, ak = m["thuis"], m["uit"]
+        base_h = (shrunk[hk][0] * shrunk[ak][1]) / league_avg if league_avg > 0 else shrunk[hk][0]
+        base_a = (shrunk[ak][0] * shrunk[hk][1]) / league_avg if league_avg > 0 else shrunk[ak][0]
+        elo_shift = (elo_dict.get(hk, 1500.0) - elo_dict.get(ak, 1500.0)) / 400.0
+        expected_goals.append((max(0.2, base_h + elo_shift), max(0.2, base_a - elo_shift)))
+
+    teams = list(team_names)
+    team_indices = {t: idx for idx, t in enumerate(teams)}
+    n_teams = len(teams)
+
+    games_played = np.zeros((n_simulations, n_teams), dtype=np.int16)
+    points = np.zeros((n_simulations, n_teams), dtype=np.int16)
+    wins = np.zeros((n_simulations, n_teams), dtype=np.int16)
+    goals_for = np.zeros((n_simulations, n_teams), dtype=np.int16)
+    goals_against = np.zeros((n_simulations, n_teams), dtype=np.int16)
+
+    for m in played_matches:
+        hi = team_indices[m["thuis"]]
+        ai = team_indices[m["uit"]]
+        hs, as_ = m["score_thuis"], m["score_uit"]
+        games_played[:, hi] += 1
+        games_played[:, ai] += 1
+        goals_for[:, hi] += hs
+        goals_against[:, hi] += as_
+        goals_for[:, ai] += as_
+        goals_against[:, ai] += hs
+        if hs > as_:
+            wins[:, hi] += 1
+            points[:, hi] += 3
+        elif as_ > hs:
+            wins[:, ai] += 1
+            points[:, ai] += 3
+        else:
+            points[:, hi] += 1
+            points[:, ai] += 1
+
+    rng = np.random.default_rng(_MONTE_CARLO_RANDOM_SEED)
+    if horizon_simulated_matches:
+        h_lambdas = np.array([g[0] for g in expected_goals])
+        a_lambdas = np.array([g[1] for g in expected_goals])
+        sim_h = rng.poisson(h_lambdas, size=(n_simulations, len(horizon_simulated_matches)))
+        sim_a = rng.poisson(a_lambdas, size=(n_simulations, len(horizon_simulated_matches)))
+
+        for idx, m in enumerate(horizon_simulated_matches):
+            hi = team_indices[m["thuis"]]
+            ai = team_indices[m["uit"]]
+            hs = sim_h[:, idx]
+            as_ = sim_a[:, idx]
+            games_played[:, hi] += 1
+            games_played[:, ai] += 1
+            goals_for[:, hi] += hs
+            goals_against[:, hi] += as_
+            goals_for[:, ai] += as_
+            goals_against[:, ai] += hs
+            hw = hs > as_
+            aw = as_ > hs
+            wins[:, hi] += hw
+            wins[:, ai] += aw
+            points[:, hi] += np.where(hw, 3, hs == as_)
+            points[:, ai] += np.where(aw, 3, hs == as_)
+
+    goal_diff = goals_for - goals_against
+    name_order = np.argsort([team_names[t].casefold() for t in teams])
+    order = np.lexsort(
+        (
+            np.broadcast_to(name_order, (n_simulations, n_teams)),
+            -goals_for,
+            -goal_diff,
+            -wins,
+            -points,
+        ),
+        axis=1,
+    )
+    positions = np.empty_like(order, dtype=np.int16)
+    positions[np.arange(n_simulations)[:, None], order] = np.arange(1, n_teams + 1)
+
+    rows = []
+    eshg_meta: dict[str, Any] = {}
+    for t_key in teams:
+        idx = team_indices[t_key]
+        pos_arr = positions[:, idx]
+        pts_arr = points[:, idx]
+        gs_val = int(games_played[0, idx])
+        p10 = int(round(float(np.percentile(pos_arr, 10))))
+        p90 = int(round(float(np.percentile(pos_arr, 90))))
+        avg_pos = float(np.mean(pos_arr))
+        avg_pts = float(np.mean(pts_arr))
+        top3_pct = float(np.count_nonzero(pos_arr <= min(3, n_teams)) / n_simulations * 100)
+        left_pct = float(np.count_nonzero(pos_arr <= min(6, n_teams)) / n_simulations * 100)
+
+        row_dict = {
+            "Verw. Pos": round(avg_pos, 1),
+            "Huidig": current_positions.get(t_key, pd.NA),
+            "Team": team_names[t_key],
+            "GS": gs_val,
+            "Verw. PT": round(avg_pts, 1),
+            "Bandbreedte": f"{p10}e – {p90}e" if p10 != p90 else f"{p10}e",
+            "Top 3 (%)": round(top3_pct, 1),
+            "Linkerrijtje (%)": round(left_pct, 1),
+        }
+        rows.append(row_dict)
+        if t_key == _team_key(_ESHG_TEAM):
+            eshg_meta = {
+                "huidig": current_positions.get(t_key),
+                "verw_pos": avg_pos,
+                "verw_pt": avg_pts,
+                "p10": p10,
+                "p90": p90,
+                "top3_pct": top3_pct,
+                "left_pct": left_pct,
+            }
+
+    summary = pd.DataFrame(rows).sort_values(
+        ["Verw. Pos", "Verw. PT"],
+        ascending=[True, False],
+        kind="stable",
+    ).reset_index(drop=True)
+
+    return summary, {
+        "mode": "simulated",
+        "simulated_other_count": len(horizon_simulated_matches),
+        "eshg": eshg_meta,
+    }
 
 
 def get_quarter_stats() -> pd.DataFrame:
@@ -1470,3 +1835,53 @@ def get_goal_type_distribution() -> pd.DataFrame:
         ],
         columns=["Type", "Aantal"],
     )
+
+
+def get_pitchers() -> list[dict[str, Any]]:
+    """Laad alle geregistreerde pitchers uit data/pitchers.json."""
+    return _load_json_records(_PITCHERS_FILE)
+
+
+def _save_pitchers(records: list[dict[str, Any]]) -> None:
+    try:
+        _PITCHERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with _PITCHERS_FILE.open("w", encoding="utf-8") as file:
+            json.dump(records, file, ensure_ascii=False, indent=2)
+            file.write("\n")
+    except OSError as error:
+        raise ValueError(f"Pitchers konden niet worden opgeslagen: {error}") from error
+
+
+def add_pitcher_record(speler: str, datum: str, aantal: int, reden: str) -> None:
+    """Voeg een nieuw openstaand pitcher-item toe."""
+    records = get_pitchers()
+    records.append(
+        {
+            "id": f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{len(records)}",
+            "speler": speler.strip(),
+            "datum": _normalize_date(datum),
+            "aantal": max(1, int(aantal)),
+            "reden": reden.strip() or "Geen reden opgegeven",
+            "gehaald": False,
+            "gehaald_op": None,
+        }
+    )
+    _save_pitchers(records)
+
+
+def set_pitcher_collected(pitcher_id: str, collected: bool) -> None:
+    """Markeer een pitcher-item als geïnd/gehaald of zet terug naar openstaand."""
+    records = get_pitchers()
+    today_str = datetime.now().date().isoformat()
+    for item in records:
+        if item.get("id") == pitcher_id:
+            item["gehaald"] = bool(collected)
+            item["gehaald_op"] = today_str if collected else None
+            break
+    _save_pitchers(records)
+
+
+def delete_pitcher_record(pitcher_id: str) -> None:
+    """Verwijder een pitcher-item definitief."""
+    records = [item for item in get_pitchers() if item.get("id") != pitcher_id]
+    _save_pitchers(records)
