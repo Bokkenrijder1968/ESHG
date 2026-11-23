@@ -1162,15 +1162,18 @@ def simulate_standings(simulated_matches: list[dict]) -> pd.DataFrame:
 
 
 def get_quarter_stats() -> pd.DataFrame:
-    """Return ESHG and opponent goals aggregated by quarter."""
+    """Return ESHG and opponent goals aggregated by quarter, including match coverage in attrs."""
     quarter_goals = {
         f"Q{quarter}": {"Goals ESHG": 0, "Goals Tegen": 0}
         for quarter in range(1, 5)
     }
 
-    for match in _get_scoring_matches():
-        if not _match_has_result(match):
-            continue
+    scoring_matches = [
+        match for match in _get_scoring_matches() if _match_has_result(match)
+    ]
+    tracked_matches = 0
+
+    for match in scoring_matches:
         if match.get("kwarten_bijgehouden") is False:
             continue
         quarters = match.get("kwarten")
@@ -1186,6 +1189,7 @@ def get_quarter_stats() -> pd.DataFrame:
         if len(eshg_quarters) != 4 or len(opponent_quarters) != 4:
             continue
 
+        tracked_matches += 1
         for quarter_index in range(4):
             eshg_score = _score(
                 eshg_quarters[quarter_index]
@@ -1211,37 +1215,47 @@ def get_quarter_stats() -> pd.DataFrame:
                 "Doelsaldo": totals["Goals ESHG"] - totals["Goals Tegen"],
             }
         )
-    return pd.DataFrame(
+    frame = pd.DataFrame(
         rows,
         columns=["Kwart", "Goals ESHG", "Goals Tegen", "Doelsaldo"],
     )
+    frame.attrs["wedstrijden_bijgehouden"] = tracked_matches
+    frame.attrs["wedstrijden_totaal"] = len(scoring_matches)
+    return frame
 
 
 def get_corner_stats() -> dict[str, int | float]:
-    """Return attacking and defensive penalty-corner totals and percentages."""
-    stats = {
+    """Return attacking and defensive penalty-corner totals, percentages, and match coverage."""
+    scoring_matches = [
+        match for match in _get_scoring_matches() if _match_has_result(match)
+    ]
+    tracked_matches = 0
+
+    stats: dict[str, int | float] = {
         "voor_totaal": 0,
         "voor_gescoord": 0,
         "conversie_percentage": 0.0,
         "tegen_totaal": 0,
         "tegen_gescoord": 0,
         "verdedigingspercentage": 0.0,
+        "wedstrijden_bijgehouden": 0,
+        "wedstrijden_totaal": len(scoring_matches),
     }
 
-    for match in _get_scoring_matches():
-        if not _match_has_result(match):
-            continue
+    for match in scoring_matches:
         if match.get("corners_bijgehouden") is False:
             continue
         corners = match.get("corners")
         if not isinstance(corners, dict):
             continue
 
+        tracked_matches += 1
         for field in ("voor_totaal", "voor_gescoord", "tegen_totaal", "tegen_gescoord"):
             value = _score(corners.get(field))
             if value is not None:
                 stats[field] += value
 
+    stats["wedstrijden_bijgehouden"] = tracked_matches
     if stats["voor_totaal"]:
         stats["conversie_percentage"] = (
             stats["voor_gescoord"] / stats["voor_totaal"] * 100

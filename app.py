@@ -15,8 +15,8 @@ tab_invoer, tab_stand, tab_matchup, tab_scenario, tab_stats, tab_trends, tab_sim
         "🏆 Stand & Schema",
         "🎯 Matchup & Analyse",
         "🔮 Scenario Calculator",
-        "📊 Spelers & Stats",
-        "📈 Trends & Fysiek",
+        "📊 Spelerstatistieken",
+        "📈 Wedstrijdstatistieken",
         "🎲 Simulaties & ELO",
     ]
 )
