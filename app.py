@@ -1,43 +1,52 @@
-import streamlit as st # type: ignore[import-not-found]
+import streamlit as st  # type: ignore[import-not-found]
+
+from src.constants import ENABLE_PITCHERS
 from src.views.input_view import render_input_view
 from src.views.matchup_view import render_matchup_view
-from src.views.scenario_view import render_scenario_view
+from src.views.pitchers_view import render_pitchers_view
 from src.views.players_view import render_players_view
+from src.views.scenario_view import render_scenario_view
 from src.views.simulation_view import render_simulation_view
 from src.views.table_view import render_table_view
 from src.views.trends_view import render_trends_view
 
 st.set_page_config(page_title="Don Quishoot H3 Manager", layout="wide", page_icon="🏑")
 
-tab_invoer, tab_stand, tab_matchup, tab_scenario, tab_stats, tab_trends, tab_simulaties = st.tabs(
-    [
-        "📝 Wedstrijd Invoeren",
-        "🏆 Stand & Schema",
-        "🎯 Matchup & Analyse",
-        "🔮 Scenario Calculator",
-        "📊 Spelerstatistieken",
-        "📈 Wedstrijdstatistieken",
-        "🎲 Simulaties & ELO",
-    ]
-)
+tab_titles = [
+    "📝 Wedstrijd Invoeren",
+    "🏆 Stand & Schema",
+    "🎯 Matchup & Analyse",
+    "🔮 Scenario Calculator",
+    "📊 Spelerstatistieken",
+    "📈 Teamstatistieken",
+    "🎲 Simulaties & ELO",
+]
+if ENABLE_PITCHERS:
+    tab_titles.append("🍺 Pitchers")
 
-with tab_invoer:
+tabs = st.tabs(tab_titles)
+
+with tabs[0]:
     render_input_view()
 
-with tab_stand:
+with tabs[1]:
     render_table_view()
 
-with tab_matchup:
+with tabs[2]:
     render_matchup_view()
 
-with tab_scenario:
+with tabs[3]:
     render_scenario_view()
 
-with tab_stats:
+with tabs[4]:
     render_players_view()
 
-with tab_trends:
+with tabs[5]:
     render_trends_view()
 
-with tab_simulaties:
+with tabs[6]:
     render_simulation_view()
+
+if ENABLE_PITCHERS:
+    with tabs[7]:
+        render_pitchers_view()

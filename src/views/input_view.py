@@ -3,9 +3,16 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-import streamlit as st # type: ignore[import-not-found]
+import streamlit as st  # type: ignore[import-not-found]
 
-from src.constants import ASSIST_OPTIONS, OPPONENTS, PLAYERS
+from src.constants import (
+    ASSIST_OPTIONS,
+    CARD_TYPES,
+    OPPONENTS,
+    PLAYERS,
+    SQUAD_PLAYERS,
+)
+
 
 # Ondersteun zowel src/input_view.py als src/views/input_view.py
 def _resolve_data_file() -> Path:
@@ -13,6 +20,7 @@ def _resolve_data_file() -> Path:
     if p2.parent.exists():
         return p2
     return Path(__file__).resolve().parents[1] / "data" / "all_matches.json"
+
 
 ALL_MATCHES_FILE = _resolve_data_file()
 GOAL_TYPES = ["Veldgoal", "Strafcorner", "Strafbal (PS)"]
@@ -80,7 +88,7 @@ def _get_total_score(selected_match: dict[str, Any] | None, team: str) -> int:
         val = selected_match.get("score_thuis") if is_home else selected_match.get("score_uit")
     else:
         val = selected_match.get("score_uit") if is_home else selected_match.get("score_thuis")
-    
+
     if val is not None:
         try:
             return max(0, int(str(val)))
@@ -117,10 +125,8 @@ def _render_eshg_input(all_matches: list[dict[str, Any]]) -> None:
         st.warning("Geen wedstrijden voor Don Quishoot H3 gevonden in het wedstrijdbestand.")
         return
 
-    # Sorteer chronologisch op ronde
     eshg_matches.sort(key=lambda m: (int(m.get("ronde") or 99), str(m.get("datum", ""))))
 
-    # Default naar de eerstvolgende nog niet gespeelde wedstrijd
     unplayed_indices = [i for i, m in enumerate(eshg_matches) if not m.get("gespeeld")]
     default_idx = unplayed_indices[0] if unplayed_indices else 0
 
@@ -222,7 +228,7 @@ def _render_eshg_input(all_matches: list[dict[str, Any]]) -> None:
 
     resultaat, punten = _determine_result(eshg_total, opponent_total)
     res_label = {"W": "Winst", "G": "Gelijkspel", "V": "Verlies"}[resultaat]
-    
+
     col_status, col_res = st.columns([1, 2])
     with col_status:
         match_is_played = st.checkbox("Wedstrijd is gespeeld", value=bool(selected_match.get("gespeeld", True)), key=f"played_{match_key}")
@@ -285,15 +291,71 @@ def _render_eshg_input(all_matches: list[dict[str, Any]]) -> None:
         ct_total = int(c3.number_input("Corners tegen", min_value=0, value=int(corners_data.get("tegen_totaal", 0)), key=f"c3_{match_key}"))
         ct_scored = int(c4.number_input("Benut tegen", min_value=0, max_value=max(0, ct_total), value=min(int(corners_data.get("tegen_gescoord", 0)), ct_total), key=f"c4_{match_key}"))
 
-    st.subheader("5. Notities & Analyse")
+    st.subheader("5. Aanwezigheid")
+    saved_attendees = selected_match.get("aanwezigen")
+    if isinstance(saved_attendees, list):
+        default_attendees = [p for p in saved_attendees if p in SQUAD_PLAYERS]
+    else:
+        default_attendees = list(SQUAD_PLAYERS)
+
+    attendees = st.multiselect(
+        "Aanwezige selectiespelers (tik afwezigen weg)",
+        options=SQUAD_PLAYERS,
+        default=default_attendees,
+        key=f"att_{match_key}",
+    )
+    st.caption(f"Aanwezig: {len(attendees)} van {len(SQUAD_PLAYERS)} selectiespelers.")
+
+    st.subheader("6. Kaarten & Invallers")
+    extra_stats = _as_dict(selected_match.get("extra_stats"))
+    raw_cards = extra_stats.get("kaarten")
+    existing_cards = [
+        item for item in raw_cards if isinstance(item, dict)
+    ] if isinstance(raw_cards, list) else []
+
+    if isinstance(raw_cards, str) and raw_cards.strip():
+        st.caption(f"Oude kaartnotitie: {raw_cards.strip()}")
+
+    num_cards = int(
+        st.number_input(
+            "Aantal kaarten (ESHG)",
+            min_value=0,
+            max_value=10,
+            value=len(existing_cards),
+            key=f"nc_{match_key}",
+        )
+    )
+    cards_list: list[dict[str, str]] = []
+    for idx in range(num_cards):
+        prev_card = existing_cards[idx] if idx < len(existing_cards) else {}
+        prev_player = prev_card.get("speler")
+        prev_type = prev_card.get("type")
+        cc1, cc2, cc3 = st.columns([1, 3, 2])
+        cc1.write(f"Kaart #{idx + 1}")
+        card_player = cc2.selectbox(
+            "Speler",
+            SQUAD_PLAYERS,
+            index=SQUAD_PLAYERS.index(prev_player) if isinstance(prev_player, str) and prev_player in SQUAD_PLAYERS else 0,
+            key=f"cp_{match_key}_{idx}",
+        )
+        card_type = cc3.selectbox(
+            "Kleur",
+            CARD_TYPES,
+            index=CARD_TYPES.index(prev_type) if isinstance(prev_type, str) and prev_type in CARD_TYPES else 0,
+            key=f"ct_{match_key}_{idx}",
+        )
+        cards_list.append({"speler": card_player, "type": card_type})
+
+    invallers = st.text_input(
+        "Invallers (buiten vaste selectie)",
+        value=str(extra_stats.get("invallers", "")),
+        key=f"ex_i_{match_key}",
+    )
+
+    st.subheader("7. Notities & Analyse")
     notes = _as_dict(selected_match.get("notities"))
     tactics = st.text_input("Tactiek / Speelstijl tegenstander", value=str(notes.get("tactiek", "")), key=f"notes_t_{match_key}")
     evaluatie = st.text_area("Evaluatie ESHG", value=str(notes.get("evaluatie", "")), key=f"notes_e_{match_key}")
-
-    extra_stats = _as_dict(selected_match.get("extra_stats"))
-    with st.expander("Extra statistieken (optioneel)"):
-        kaarten = st.text_input("Kaarten", value=str(extra_stats.get("kaarten", "")), key=f"ex_k_{match_key}")
-        invallers = st.text_input("Invallers / Afwezigen", value=str(extra_stats.get("invallers", "")), key=f"ex_i_{match_key}")
 
     if st.button("Wedstrijd opslaan", type="primary"):
         thuis_team = _ESHG_TEAM if locatie == "Thuis" else opponent
@@ -317,8 +379,9 @@ def _render_eshg_input(all_matches: list[dict[str, Any]]) -> None:
         selected_match["corners_bijgehouden"] = track_corners
         selected_match["corners"] = {"voor_totaal": cv_total, "voor_gescoord": cv_scored, "tegen_totaal": ct_total, "tegen_gescoord": ct_scored} if track_corners else None
         selected_match["goals"] = goals
+        selected_match["aanwezigen"] = list(attendees) if match_is_played else []
         selected_match["notities"] = {"tactiek": tactics, "evaluatie": evaluatie}
-        selected_match["extra_stats"] = {"kaarten": kaarten, "invallers": invallers}
+        selected_match["extra_stats"] = {"kaarten": cards_list, "invallers": invallers}
 
         _save_all_matches_file(all_matches)
         st.success(f"Wedstrijd tegen {opponent} succesvol opgeslagen!")
@@ -341,7 +404,6 @@ def _render_poule_by_round_input(all_matches: list[dict[str, Any]]) -> None:
         st.warning("Geen speelrondes gevonden in de competitiedata.")
         return
 
-    # Bepaal de eerste ronde met nog niet gespeelde poulewedstrijden
     unplayed_rounds = [
         int(m["ronde"])
         for m in all_matches
@@ -357,7 +419,6 @@ def _render_poule_by_round_input(all_matches: list[dict[str, Any]]) -> None:
 
     selected_round = st.selectbox("Kies speelronde", available_rounds, index=default_round_idx)
 
-    # Toon ESHG wedstrijd in deze ronde ter info
     eshg_in_round = [m for m in all_matches if m.get("ronde") == selected_round and _is_eshg_fixture(m)]
     if eshg_in_round:
         e_match = eshg_in_round[0]
@@ -369,7 +430,6 @@ def _render_poule_by_round_input(all_matches: list[dict[str, Any]]) -> None:
     else:
         st.info(f"Don Quishoot H3 is vrij in speelronde {selected_round}.")
 
-    # Overige wedstrijden uit deze ronde
     round_matches = [
         m for m in all_matches
         if m.get("ronde") == selected_round and not _is_eshg_fixture(m)
@@ -379,14 +439,13 @@ def _render_poule_by_round_input(all_matches: list[dict[str, Any]]) -> None:
         st.info(f"Geen overige wedstrijden gevonden voor speelronde {selected_round}.")
         return
 
-    # Formulier om alle uitslagen in één keer in te vullen zonder herladen per veld
     with st.form(key=f"poule_round_form_{selected_round}"):
         st.markdown("---")
         form_data = []
 
         for idx, match in enumerate(round_matches):
             col_match, col_sh, col_sep, col_su, col_check = st.columns([4, 1.5, 0.4, 1.5, 2])
-            
+
             with col_match:
                 st.markdown(
                     f"**{match['thuis']}** – **{match['uit']}**  \n"

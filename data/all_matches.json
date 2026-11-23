@@ -224,7 +224,7 @@
       "evaluatie": "Nog slecht op elkaar ingespeeld, kansloze wedstrijd"
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [],
       "invallers": ""
     },
     "knhb_match_id": 2095581,
@@ -232,7 +232,27 @@
     "veld_type": "Waterveld",
     "locatie_accommodatie": "S Sport Centrum (T.U.)",
     "locatie_adres": "Onze Lieve Vrouwestraat 1, 5612AW Eindhoven",
-    "veld_naam": "Veld 1"
+    "veld_naam": "Veld 1",
+    "tegenstander": "Hopbel H2-O",
+    "locatie": "Thuis",
+    "aanwezigen": [
+      "Dobby",
+      "Maarten",
+      "Flappie",
+      "Menno",
+      "Schenk",
+      "Marko",
+      "Tito",
+      "Joep",
+      "Mees",
+      "Padt",
+      "Kliko",
+      "Buffel",
+      "Wob",
+      "Birk",
+      "Lukas (K)",
+      "Tibbe"
+    ]
   },
   {
     "match_id": "poule_16_2026-09-20_Were_Di_H5_Were_Di_H4",
@@ -327,7 +347,7 @@
       "evaluatie": "Begin met 10 man, daarna met 11. Sterke wedstrijd, erg goed samenspel, helaas op conditie zonder wissels moeten afleggen"
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [],
       "invallers": ""
     },
     "tegenstander": "Warande H3",
@@ -337,7 +357,20 @@
     "veld_type": "Semiveld",
     "locatie_accommodatie": "Sportpark 'Paterserf'",
     "locatie_adres": "Warandelaan 7, 4904PA Oosterhout",
-    "veld_naam": "Veld A"
+    "veld_naam": "Veld A",
+    "aanwezigen": [
+      "Dobby",
+      "Maarten",
+      "Menno",
+      "Schenk",
+      "Marko",
+      "Tito",
+      "Joep",
+      "Mees",
+      "Padt",
+      "Floris",
+      "Bram (K)"
+    ]
   },
   {
     "match_id": "poule_20_2026-09-20_Push_H4_Drunen_H3",
@@ -470,7 +503,7 @@
       "evaluatie": "Met 16 spelers, maar samenspel ging minder. Goed dichtgehouden achterin, voorin niet veel mogelijkheden. Zeer spannende wedstrijd"
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [],
       "invallers": ""
     },
     "knhb_match_id": 2095593,
@@ -478,7 +511,27 @@
     "veld_type": "Waterveld",
     "locatie_accommodatie": "S Sport Centrum (T.U.)",
     "locatie_adres": "Onze Lieve Vrouwestraat 1, 5612AW Eindhoven",
-    "veld_naam": "Veld 1"
+    "veld_naam": "Veld 1",
+    "tegenstander": "Were Di H5",
+    "locatie": "Thuis",
+    "aanwezigen": [
+      "Dobby",
+      "Maarten",
+      "Menno",
+      "Schenk",
+      "Marko",
+      "Tito",
+      "Joep",
+      "Mees",
+      "Padt",
+      "Kliko",
+      "Tim (K)",
+      "Loek",
+      "Tijl",
+      "Birk",
+      "Flappie",
+      "Wob"
+    ]
   },
   {
     "match_id": "poule_6_2026-10-04_Were_Di_H5_Den_Bosch_H5",
@@ -621,7 +674,7 @@
       "evaluatie": "Tito in de goal, 11 spelers, maar slechte tegenstander. Voelde als een oefenwedstrijd. Q3 heel slordig, Q4 teruggepakt. Heel veel kansen, relatief weining afgemaakt ondanks de score"
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [],
       "invallers": ""
     },
     "knhb_match_id": 2095596,
@@ -629,7 +682,23 @@
     "veld_type": "Waterveld",
     "locatie_accommodatie": "Sportpark 'De Warande'",
     "locatie_adres": "Horst 27, 5707GW Helmond",
-    "veld_naam": "veld 1"
+    "veld_naam": "veld 1",
+    "tegenstander": "Helmond H4",
+    "locatie": "Uit",
+    "aanwezigen": [
+      "Dobby",
+      "Maarten",
+      "Flappie",
+      "Menno",
+      "Schenk",
+      "Marko",
+      "Tito",
+      "Joep",
+      "Padt",
+      "Kliko",
+      "Loek",
+      "Sem"
+    ]
   },
   {
     "match_id": "poule_10_2026-10-04_Push_H4_Were_Di_H4",
@@ -791,7 +860,7 @@
       "evaluatie": "Wedstrijd met 11 man, vooral veel aanvallers. Hadden er meer uit moeten halen, waren de bovenliggende partij, konden makkelijk om ze heen spelen, werd goed samengespeeld vanuit ons, niet te veel persoonlijke acties"
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [],
       "invallers": ""
     },
     "knhb_match_id": 2095603,
@@ -799,7 +868,22 @@
     "veld_type": "Waterveld",
     "locatie_accommodatie": "S Sport Centrum (T.U.)",
     "locatie_adres": "Onze Lieve Vrouwestraat 1, 5612AW Eindhoven",
-    "veld_naam": "Veld 1"
+    "veld_naam": "Veld 1",
+    "tegenstander": "Push H4",
+    "locatie": "Thuis",
+    "aanwezigen": [
+      "Dobby",
+      "Menno",
+      "Schenk",
+      "Tito",
+      "Joep",
+      "Mees",
+      "Padt",
+      "Kliko",
+      "Wob",
+      "Bram",
+      "Duarte (K)"
+    ]
   },
   {
     "match_id": "poule_2026-11-01_Geel-Zwart_H2-O",
@@ -853,7 +937,7 @@
       "evaluatie": "Weer met 11 man, twee invallers"
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [],
       "invallers": ""
     },
     "tegenstander": "Geel-Zwart H2-O",
@@ -863,7 +947,20 @@
     "veld_type": "Waterveld",
     "locatie_accommodatie": "Sportpark 'Prins Willem-Alexander'",
     "locatie_adres": "Middegaal 41, 5461XC Veghel",
-    "veld_naam": "Veld 1"
+    "veld_naam": "Veld 1",
+    "aanwezigen": [
+      "Menno",
+      "Schenk",
+      "Marko",
+      "Tito",
+      "Joep",
+      "Mees",
+      "Padt",
+      "Tim (K)",
+      "Tijl",
+      "Willem",
+      "Broertje Schenk"
+    ]
   },
   {
     "match_id": "poule_7_2026-11-01_Helmond_H4_Shot_H2-O",
@@ -998,7 +1095,12 @@
       "evaluatie": ""
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [
+        {
+          "speler": "Padt",
+          "type": "Groen"
+        }
+      ],
       "invallers": ""
     },
     "knhb_match_id": 2095614,
@@ -1008,7 +1110,22 @@
     "locatie_adres": "Onze Lieve Vrouwestraat 1, 5612AW Eindhoven",
     "veld_naam": "Veld 1",
     "tegenstander": "Were Di H4",
-    "locatie": "Thuis"
+    "locatie": "Thuis",
+    "aanwezigen": [
+      "Dobby",
+      "Maarten",
+      "Menno",
+      "Schenk",
+      "Marko",
+      "Tito",
+      "Joep",
+      "Mees",
+      "Padt",
+      "Tijl",
+      "Tibbe",
+      "Bram (K)",
+      "Wob"
+    ]
   },
   {
     "match_id": "poule_8_2026-11-08_Shot_H2-O_Push_H4",
@@ -1148,7 +1265,7 @@
       "evaluatie": ""
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [],
       "invallers": ""
     },
     "knhb_match_id": 2095618,
@@ -1158,7 +1275,22 @@
     "locatie_adres": "Onze Lieve Vrouwestraat 1, 5612AW Eindhoven",
     "veld_naam": "Veld 1",
     "tegenstander": "Drunen H3",
-    "locatie": "Thuis"
+    "locatie": "Thuis",
+    "aanwezigen": [
+      "Dobby",
+      "Maarten",
+      "Schenk",
+      "Marko",
+      "Joep",
+      "Mees",
+      "Padt",
+      "Kliko",
+      "Tim (K)",
+      "Tijl",
+      "Bram",
+      "Tibbe",
+      "Paulus"
+    ]
   },
   {
     "match_id": "poule_9_2026-11-15_Helmond_H4_Hopbel_H2-O",
@@ -1318,7 +1450,16 @@
       "evaluatie": ""
     },
     "extra_stats": {
-      "kaarten": "",
+      "kaarten": [
+        {
+          "speler": "Joep",
+          "type": "Groen"
+        },
+        {
+          "speler": "Maarten",
+          "type": "Groen"
+        }
+      ],
       "invallers": ""
     },
     "knhb_match_id": 2095625,
@@ -1328,7 +1469,21 @@
     "locatie_adres": "Oosterplasweg 35, 5215HT Den Bosch",
     "veld_naam": "KGZ 6",
     "tegenstander": "Den Bosch H5",
-    "locatie": "Uit"
+    "locatie": "Uit",
+    "aanwezigen": [
+      "Dobby",
+      "Maarten",
+      "Menno",
+      "Schenk",
+      "Marko",
+      "Tito",
+      "Joep",
+      "Mees",
+      "Padt",
+      "Kliko",
+      "Tim (K)",
+      "Tijl"
+    ]
   },
   {
     "match_id": "poule_10_2026-11-22_Warande_H3_Helmond_H4",

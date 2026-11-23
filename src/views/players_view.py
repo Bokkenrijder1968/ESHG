@@ -1,5 +1,5 @@
 import plotly.express as px
-import streamlit as st # type: ignore[import-not-found]
+import streamlit as st  # type: ignore[import-not-found]
 import numpy as np
 np.random.seed(42)
 
@@ -8,6 +8,8 @@ from src.calculations import (
     get_player_match_timeline,
     get_top_duos,
 )
+
+
 def _render_podium_card(title: str, top_players: list[tuple[str, int]], unit: str) -> None:
     """Rendert een podiumkaart voor de top 3 van een categorie."""
     medals = ["🥇", "🥈", "🥉"]
@@ -43,7 +45,7 @@ def render_players_view() -> None:
     # 1. PODIA (Top 3 voor Goals, Assists en Totaal G+A)
     # =========================================================================
     st.subheader("🏆 De Podia")
-    
+
     top_goals = (
         player_stats[player_stats["Goals"] > 0]
         .sort_values(["Goals", "Veldgoals"], ascending=False)[["Speler", "Goals"]]
@@ -93,7 +95,7 @@ def render_players_view() -> None:
             st.caption(", ".join(zero_both) if zero_both else "Niemand!")
 
     # =========================================================================
-    # 3. VISUELE STAAFDIAGRAM (Actieve spelers, netjes gesorteerd van hoog naar laag)
+    # 3. VISUELE SCATTERPLOT (Actieve spelers)
     # =========================================================================
     active_players = player_stats[player_stats["Totaal_G_A"] > 0].copy()
 
@@ -102,7 +104,6 @@ def render_players_view() -> None:
 
         active = player_stats[player_stats["Totaal_G_A"] > 0].copy()
 
-        # 1. Groepeer op coördinaten en tel direct het exacte aantal spelers binnen de aggregatie
         grouped = (
             active.groupby(["Assists", "Goals", "Totaal_G_A"])
             .agg(
@@ -112,7 +113,6 @@ def render_players_view() -> None:
             .reset_index()
         )
 
-        # 2. Plotly scatter plot
         fig = px.scatter(
             grouped,
             x="Assists",
@@ -120,7 +120,7 @@ def render_players_view() -> None:
             text="Speler",
             color="Totaal_G_A",
             size="Aantal_Spelers",
-            size_max=26,  # Maximale grootte voor de grootste groep (3 spelers)
+            size_max=26,
             color_continuous_scale="Viridis",
             hover_data={
                 "Speler": True,
@@ -131,14 +131,13 @@ def render_players_view() -> None:
             },
         )
 
-        # Kwadrantlijnen
         fig.add_hline(y=1.5, line_dash="dot", line_color="rgba(255,255,255,0.2)")
         fig.add_vline(x=1.5, line_dash="dot", line_color="rgba(255,255,255,0.2)")
 
         fig.update_traces(
             textposition="top center",
             marker=dict(
-                sizemin=12,  # Voorkomt dat stippen met 1 speler te klein worden
+                sizemin=12,
                 line=dict(width=1.5, color="white"),
             ),
         )
@@ -171,19 +170,21 @@ def render_players_view() -> None:
         st.dataframe(top_duos, hide_index=True, width="stretch")
 
     # =========================================================================
-    # 5. VOLLEDIGE TABEL (Zonder kleuren + Klikbare rijen)
+    # 5. VOLLEDIGE TABEL (Met GS, Punten, Goals, Assists en Kaarten)
     # =========================================================================
     st.subheader("📋 Volledige spelersstatistieken")
-    st.caption("💡 *Klik op een rij in de tabel om hieronder direct de wedstrijdstatistieken van die speler te zien.*")
+    st.caption(
+        "💡 *Klik op een rij in de tabel om hieronder de wedstrijdstatistieken van die speler te zien. "
+        "GS = gespeelde wedstrijden aanwezig · Punten = behaalde ESHG-punten bij aanwezigheid.*"
+    )
 
     display_table = player_stats.rename(columns={"Totaal_G_A": "Totaal"})
 
-    # Interactieve tabel zonder achtergrondkleuren
     table_event = st.dataframe(
         display_table,
         hide_index=True,
         width="stretch",
-        height=(min(len(display_table), 15) + 1) * 36,
+        height=(min(len(display_table), 16) + 1) * 36,
         on_select="rerun",
         selection_mode="single-row",
         key="players_overview_table",
@@ -198,7 +199,6 @@ def render_players_view() -> None:
         if selection is not None:
             selected_rows = selection.get("rows", [])
 
-    # Pak de aangeklikte speler; neem standaard de bovenste speler als er nog niets is aangeklikt
     if selected_rows:
         selected_player = display_table.iloc[selected_rows[0]]["Speler"]
     elif not display_table.empty:
@@ -211,6 +211,6 @@ def render_players_view() -> None:
         timeline = get_player_match_timeline(selected_player)
 
         if timeline.empty:
-            st.info(f"{selected_player} heeft dit seizoen nog geen geregistreerde goals of assists.")
+            st.info(f"{selected_player} heeft dit seizoen nog geen geregistreerde wedstrijden, goals of kaarten.")
         else:
             st.dataframe(timeline, hide_index=True, width="stretch")

@@ -11,18 +11,22 @@ from src.constants import PLAYERS
 
 _DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 _ALL_MATCHES_FILE = _DATA_DIR / "all_matches.json"
+_PITCHERS_FILE = _DATA_DIR / "pitchers.json"
 _ESHG_TEAM = "Don Quishoot H3"
 _MONTE_CARLO_RANDOM_SEED = 42
 _OWN_GOAL_LABEL = "Eigen doelpunt tegenstander"
 _PLAYER_STAT_COLUMNS = [
     "Positie",
     "Speler",
+    "GS",
     "Goals",
+    "Assists",
+    "Totaal_G_A",
     "Veldgoals",
     "Strafcorners",
     "Strafballen",
-    "Assists",
-    "Totaal_G_A",
+    "Punten",
+    "Kaarten",
 ]
 
 
@@ -76,16 +80,6 @@ def _person_name(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
-def _empty_player_stats() -> dict[str, int]:
-    return {
-        "Goals": 0,
-        "Veldgoals": 0,
-        "Strafcorners": 0,
-        "Strafballen": 0,
-        "Assists": 0,
-    }
-
-
 def _normalize_date(value: object) -> str:
     if value is None:
         return ""
@@ -131,14 +125,111 @@ def _valid_played_score(match: dict) -> tuple[int, int] | None:
     return home_score, away_score
 
 
+def _empty_player_stats() -> dict[str, int]:
+    return {
+        "GS": 0,
+        "Punten": 0,
+        "Goals": 0,
+        "Veldgoals": 0,
+        "Strafcorners": 0,
+        "Strafballen": 0,
+        "Assists": 0,
+        "Groen": 0,
+        "Geel": 0,
+        "Rood": 0,
+    }
+
+
+def _card_records(match: dict[str, Any]) -> list[dict[str, str]]:
+    extra_stats = match.get("extra_stats")
+    if not isinstance(extra_stats, dict):
+        return []
+    raw_cards = extra_stats.get("kaarten")
+    if not isinstance(raw_cards, list):
+        return []
+
+    cards: list[dict[str, str]] = []
+    for item in raw_cards:
+        if not isinstance(item, dict):
+            continue
+        speler = _person_name(item.get("speler"))
+        kaart_type = _person_name(item.get("type"))
+        if speler and kaart_type in ("Groen", "Geel", "Rood"):
+            cards.append({"speler": speler, "type": kaart_type})
+    return cards
+
+
+def _format_cards_summary(groen: int, geel: int, rood: int) -> str:
+    parts = []
+    if rood > 0:
+        parts.append(f"{rood}🟥")
+    if geel > 0:
+        parts.append(f"{geel}🟨")
+    if groen > 0:
+        parts.append(f"{groen}🟩")
+    return " ".join(parts) if parts else "—"
+
+
+def _match_eshg_outcome(match: dict[str, Any]) -> tuple[int, int, str, int] | None:
+    scores = _valid_played_score(match)
+    if scores is None:
+        return None
+    home = str(match.get("thuis", "")).strip()
+    if _team_key(home) == _team_key(_ESHG_TEAM):
+        eshg_goals, opp_goals = scores
+    else:
+        eshg_goals, opp_goals = scores[1], scores[0]
+
+    if eshg_goals > opp_goals:
+        return eshg_goals, opp_goals, "W", 3
+    if eshg_goals == opp_goals:
+        return eshg_goals, opp_goals, "G", 1
+    return eshg_goals, opp_goals, "V", 0
+
+
+def _match_present_players(match: dict[str, Any], squad_set: set[str]) -> set[str]:
+    raw_attendees = match.get("aanwezigen")
+    if isinstance(raw_attendees, list):
+        return {
+            name
+            for item in raw_attendees
+            if (name := _person_name(item)) and name in squad_set
+        }
+
+    # Terugvaloptie voor oudere wedstrijden zonder opgeslagen aanwezigheidslijst
+    inferred: set[str] = set()
+    for goal in _goal_records(match):
+        maker = _person_name(goal.get("maker"))
+        assist = _person_name(goal.get("assist"))
+        if maker in squad_set:
+            inferred.add(maker)
+        if assist in squad_set:
+            inferred.add(assist)
+    for card in _card_records(match):
+        if card["speler"] in squad_set:
+            inferred.add(card["speler"])
+    return inferred
+
+
 def calculate_player_stats() -> pd.DataFrame:
-    """Calculate goal and assist statistics for the squad and recorded players."""
+    """Calculate attendance, points, goals, assists, and cards for the squad."""
     player_names = [player for player in PLAYERS if player != _OWN_GOAL_LABEL]
+    squad_set = set(player_names)
     stats: dict[str, dict[str, int]] = {
         player: _empty_player_stats() for player in player_names
     }
 
     for match in _get_scoring_matches():
+        outcome = _match_eshg_outcome(match)
+        if outcome is None:
+            continue
+        _, _, _, match_points = outcome
+
+        for present_player in _match_present_players(match, squad_set):
+            player_stats = stats.setdefault(present_player, _empty_player_stats())
+            player_stats["GS"] += 1
+            player_stats["Punten"] += match_points
+
         for goal in _goal_records(match):
             maker = _person_name(goal.get("maker"))
             if maker and maker != _OWN_GOAL_LABEL:
@@ -157,23 +248,155 @@ def calculate_player_stats() -> pd.DataFrame:
                 assist_stats = stats.setdefault(assist, _empty_player_stats())
                 assist_stats["Assists"] += 1
 
+        for card in _card_records(match):
+            card_player = card["speler"]
+            if card_player != _OWN_GOAL_LABEL:
+                card_stats = stats.setdefault(card_player, _empty_player_stats())
+                card_stats[card["type"]] += 1
+
     rows = [
         {
             "Speler": player,
-            **player_stats,
+            "GS": player_stats["GS"],
+            "Punten": player_stats["Punten"],
+            "Goals": player_stats["Goals"],
+            "Veldgoals": player_stats["Veldgoals"],
+            "Strafcorners": player_stats["Strafcorners"],
+            "Strafballen": player_stats["Strafballen"],
+            "Assists": player_stats["Assists"],
             "Totaal_G_A": player_stats["Goals"] + player_stats["Assists"],
+            "Kaarten": _format_cards_summary(
+                player_stats["Groen"],
+                player_stats["Geel"],
+                player_stats["Rood"],
+            ),
         }
         for player, player_stats in stats.items()
     ]
 
     frame = pd.DataFrame(rows)
     frame = frame.sort_values(
-        ["Goals", "Assists", "Totaal_G_A"],
-        ascending=[False, False, False],
+        ["Goals", "Assists", "Totaal_G_A", "Punten", "GS"],
+        ascending=[False, False, False, False, False],
         kind="stable",
     ).reset_index(drop=True)
     frame.insert(0, "Positie", range(1, len(frame) + 1))
     return frame[_PLAYER_STAT_COLUMNS]
+
+
+def get_player_match_timeline(player: str) -> pd.DataFrame:
+    """Return played matches where a player was present, including goals, assists, points, and cards."""
+    squad_set = {p for p in PLAYERS if p != _OWN_GOAL_LABEL}
+    timeline: list[dict[str, str | int]] = []
+
+    for match in _get_scoring_matches():
+        outcome = _match_eshg_outcome(match)
+        if outcome is None:
+            continue
+        eshg_goals, opp_goals, res_code, match_points = outcome
+
+        goals = _goal_records(match)
+        cards = _card_records(match)
+        present_players = _match_present_players(match, squad_set)
+
+        player_goals = sum(
+            _person_name(goal.get("maker")) == player for goal in goals
+        )
+        player_assists = sum(
+            _person_name(goal.get("assist")) == player for goal in goals
+        )
+        player_cards = [
+            card["type"] for card in cards if card["speler"] == player
+        ]
+
+        if (
+            player not in present_players
+            and not player_goals
+            and not player_assists
+            and not player_cards
+        ):
+            continue
+
+        opponent = _person_name(match.get("tegenstander"))
+        if not opponent:
+            home = str(match.get("thuis", "")).strip()
+            away = str(match.get("uit", "")).strip()
+            opponent = away if _team_key(home) == _team_key(_ESHG_TEAM) else home
+
+        involvement = []
+        if player_goals:
+            involvement.append("Goal" if player_goals == 1 else f"{player_goals} goals")
+        if player_assists:
+            involvement.append(
+                "Assist" if player_assists == 1 else f"{player_assists} assists"
+            )
+
+        timeline.append(
+            {
+                "Datum": _normalize_date(match.get("datum")),
+                "Tegenstander": opponent,
+                "Uitslag": f"{res_code} ({eshg_goals}-{opp_goals})",
+                "Punten": match_points,
+                "Bijdrage": " + ".join(involvement) if involvement else "—",
+                "Kaart": ", ".join(player_cards) if player_cards else "—",
+            }
+        )
+
+    timeline.sort(key=lambda row: str(row["Datum"]), reverse=True)
+    return pd.DataFrame(
+        timeline,
+        columns=["Datum", "Tegenstander", "Uitslag", "Punten", "Bijdrage", "Kaart"],
+    )
+
+
+def get_pitchers() -> list[dict[str, Any]]:
+    """Laad alle geregistreerde pitchers uit data/pitchers.json."""
+    return _load_json_records(_PITCHERS_FILE)
+
+
+def _save_pitchers(records: list[dict[str, Any]]) -> None:
+    try:
+        _PITCHERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with _PITCHERS_FILE.open("w", encoding="utf-8") as file:
+            json.dump(records, file, ensure_ascii=False, indent=2)
+            file.write("\n")
+    except OSError as error:
+        raise ValueError(f"Pitchers konden niet worden opgeslagen: {error}") from error
+
+
+def add_pitcher_record(speler: str, datum: str, aantal: int, reden: str) -> None:
+    """Voeg een nieuw openstaand pitcher-item toe."""
+    records = get_pitchers()
+    records.append(
+        {
+            "id": f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{len(records)}",
+            "speler": speler.strip(),
+            "datum": _normalize_date(datum),
+            "aantal": max(1, int(aantal)),
+            "reden": reden.strip() or "Geen reden opgegeven",
+            "gehaald": False,
+            "gehaald_op": None,
+        }
+    )
+    _save_pitchers(records)
+
+
+def set_pitcher_collected(pitcher_id: str, collected: bool) -> None:
+    """Markeer een pitcher-item als geïnd/gehaald of zet terug naar openstaand."""
+    records = get_pitchers()
+    today_str = datetime.now().date().isoformat()
+    for item in records:
+        if item.get("id") == pitcher_id:
+            item["gehaald"] = bool(collected)
+            item["gehaald_op"] = today_str if collected else None
+            break
+    _save_pitchers(records)
+
+
+def delete_pitcher_record(pitcher_id: str) -> None:
+    """Verwijder een pitcher-item definitief."""
+    records = [item for item in get_pitchers() if item.get("id") != pitcher_id]
+    _save_pitchers(records)
 
 
 def get_top_duos() -> pd.DataFrame:
@@ -203,50 +426,6 @@ def get_top_duos() -> pd.DataFrame:
             for (assist, maker), count in duos
         ],
         columns=["Aangever", "Afmaker", "Aantal"],
-    )
-
-
-def get_player_match_timeline(player: str) -> pd.DataFrame:
-    """Return matches where a player scored or provided an assist."""
-    timeline: list[dict[str, str | int]] = []
-    for match in _get_scoring_matches():
-        goals = _goal_records(match)
-        player_goals = sum(
-            _person_name(goal.get("maker")) == player for goal in goals
-        )
-        player_assists = sum(
-            _person_name(goal.get("assist")) == player for goal in goals
-        )
-        if not player_goals and not player_assists:
-            continue
-
-        opponent = _person_name(match.get("tegenstander"))
-        if not opponent:
-            home = str(match.get("thuis", "")).strip()
-            away = str(match.get("uit", "")).strip()
-            opponent = away if _team_key(home) == _team_key(_ESHG_TEAM) else home
-
-        involvement = []
-        if player_goals:
-            involvement.append("Goal" if player_goals == 1 else f"{player_goals} goals")
-        if player_assists:
-            involvement.append(
-                "Assist" if player_assists == 1 else f"{player_assists} assists"
-            )
-        timeline.append(
-            {
-                "Datum": _normalize_date(match.get("datum")),
-                "Tegenstander": opponent,
-                "Bijdrage": " + ".join(involvement),
-                "Goals": player_goals,
-                "Assists": player_assists,
-            }
-        )
-
-    timeline.sort(key=lambda row: str(row["Datum"]), reverse=True)
-    return pd.DataFrame(
-        timeline,
-        columns=["Datum", "Tegenstander", "Bijdrage", "Goals", "Assists"],
     )
 
 

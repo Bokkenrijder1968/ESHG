@@ -1,3 +1,5 @@
+ENABLE_PITCHERS = False
+
 OPPONENTS = [
     "Den Bosch H5",
     "Drunen H3",
@@ -13,11 +15,17 @@ OPPONENTS = [
 ]
 
 PLAYERS = [
-    "Dobby", "Maarten", "Menno", "Schenk", "Marko",
+    "Dobby", "Maarten", "Smatje", "Flappie", "Menno", "Schenk", "Marko",
     "Tito", "Joep", "Mees", "Padt", "Kliko",
-    "Tim (K)", "Loek", "Tijl", "Bram", "Tibbe", "Willem", "Eigen doelpunt tegenstander"
+    "Tim (K)", "Loek", "Tijl", "Floris", "Birk",
+    "Wob", "Buffel", "Bram", "Tibbe",
+    "Lukas (K)", "Willem", "Bram (K)", "Sem", "Duarte (K)", "Broertje Schenk", "Paulus",
+    "Eigen doelpunt tegenstander",
 ]
-ASSIST_OPTIONS = ["Geen assist"] + [p for p in PLAYERS if p != "Eigen doelpunt tegenstander"]
+
+SQUAD_PLAYERS = [p for p in PLAYERS if p != "Eigen doelpunt tegenstander"]
+ASSIST_OPTIONS = ["Geen assist"] + SQUAD_PLAYERS
+CARD_TYPES = ["Groen", "Geel", "Rood"]
 
 REISTIJDEN_MINUTEN = {
     "helmondh4": 20,
