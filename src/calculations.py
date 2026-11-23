@@ -130,6 +130,18 @@ def _score(value: object) -> int | None:
     return score
 
 
+def _round_int(value: object) -> int | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, float) and not value.is_integer():
+        return None
+    try:
+        rnd = int(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return rnd if rnd > 0 else None
+
+
 def _valid_played_score(match: dict[str, Any]) -> tuple[int, int] | None:
     if match.get("gespeeld") is not True:
         return None
@@ -700,13 +712,7 @@ def calculate_points_progression(
         if scores is None:
             continue
 
-        raw_round = match.get("ronde")
-        round_num: int | None = None
-        if raw_round is not None and not isinstance(raw_round, bool):
-            try:
-                round_num = int(raw_round)
-            except (TypeError, ValueError):
-                round_num = None
+        round_num = _round_int(match.get("ronde"))
 
         played_entries.append(
             {
@@ -1030,22 +1036,18 @@ def predict_match_outcome(
     raw_b_for = sum(team_goals_for[team_b_key]) / played_b
     raw_b_against = sum(team_goals_against[team_b_key]) / played_b
 
-    # 1. Seizoensgemiddelde
     seasonal_a = (raw_a_for + raw_b_against) / 2.0
     seasonal_b = (raw_b_for + raw_a_against) / 2.0
 
-    # 2. Recente vorm (laatste 3)
     rec_a_for, rec_a_against = _team_recent_averages(matches, team_a, n=3)
     rec_b_for, rec_b_against = _team_recent_averages(matches, team_b, n=3)
     recent_a = (rec_a_for + rec_b_against) / 2.0
     recent_b = (rec_b_for + rec_a_against) / 2.0
 
-    # 3. Gedeelde tegenstanders
     rel_diff = _common_opponents_expected_diff(matches, team_a, team_b)
     common_a = max(0.2, league_avg + rel_diff / 2.0)
     common_b = max(0.2, league_avg - rel_diff / 2.0)
 
-    # 4. ELO + Bayesian gedempte aanval/verdediging
     elo_df = calculate_elo_ratings(matches)
     elo_dict = {
         _team_key(str(row["Team"])): float(row["ELO Rating"])
@@ -1158,7 +1160,7 @@ def predict_match_outcome(
 def run_monte_carlo_simulation(
     matches: list[dict[str, Any]], n_simulations: int = 1000, model_type: str = "standaard"
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
-    """Simulate the remaining pool fixtures and summarize final standings."""
+    """Simulate the remaining pool fixtures and summarize final standings, points fan chart, and all rank thresholds."""
     if n_simulations <= 0:
         raise ValueError("n_simulations moet groter zijn dan nul.")
 
@@ -1167,6 +1169,8 @@ def run_monte_carlo_simulation(
     remaining_matches: list[dict[str, Any]] = []
     team_goals_for: dict[str, list[int]] = {}
     team_goals_against: dict[str, list[int]] = {}
+    all_rounds: list[int] = []
+    played_rounds: list[int] = []
 
     for match in matches:
         home = str(match.get("thuis", "")).strip()
@@ -1182,15 +1186,22 @@ def run_monte_carlo_simulation(
         team_goals_against.setdefault(home_key, [])
         team_goals_against.setdefault(away_key, [])
 
+        rnd = _round_int(match.get("ronde"))
+        if rnd is not None:
+            all_rounds.append(rnd)
+
         scores = _valid_played_score(match)
         if scores is not None:
             home_score, away_score = scores
+            if rnd is not None:
+                played_rounds.append(rnd)
             played_matches.append(
                 {
                     "thuis": home_key,
                     "uit": away_key,
                     "score_thuis": home_score,
                     "score_uit": away_score,
+                    "ronde": rnd,
                 }
             )
             team_goals_for[home_key].append(home_score)
@@ -1198,7 +1209,13 @@ def run_monte_carlo_simulation(
             team_goals_for[away_key].append(away_score)
             team_goals_against[away_key].append(home_score)
         elif match.get("gespeeld") is False:
-            remaining_matches.append({"thuis": home_key, "uit": away_key})
+            remaining_matches.append(
+                {
+                    "thuis": home_key,
+                    "uit": away_key,
+                    "ronde": rnd,
+                }
+            )
 
     pool_goals_for = [
         goal for goals in team_goals_for.values() for goal in goals
@@ -1269,17 +1286,27 @@ def run_monte_carlo_simulation(
         ]
 
     teams = list(team_names)
+    n_teams = len(teams)
     team_indices = {team: index for index, team in enumerate(teams)}
-    points = np.zeros((n_simulations, len(teams)), dtype=np.int16)
-    wins = np.zeros((n_simulations, len(teams)), dtype=np.int16)
-    goals_for = np.zeros((n_simulations, len(teams)), dtype=np.int16)
-    goals_against = np.zeros((n_simulations, len(teams)), dtype=np.int16)
+    points = np.zeros((n_simulations, n_teams), dtype=np.int16)
+    wins = np.zeros((n_simulations, n_teams), dtype=np.int16)
+    goals_for = np.zeros((n_simulations, n_teams), dtype=np.int16)
+    goals_against = np.zeros((n_simulations, n_teams), dtype=np.int16)
+
+    max_round = max(all_rounds) if all_rounds else 0
+    max_played_round = max(played_rounds) if played_rounds else 0
+    round_points_delta = (
+        np.zeros((n_simulations, n_teams, max_round + 1), dtype=np.int16)
+        if max_round > 0
+        else None
+    )
 
     for match in played_matches:
         home_index = team_indices[match["thuis"]]
         away_index = team_indices[match["uit"]]
         home_score = match["score_thuis"]
         away_score = match["score_uit"]
+        rnd = match.get("ronde")
         goals_for[:, home_index] += home_score
         goals_against[:, home_index] += away_score
         goals_for[:, away_index] += away_score
@@ -1287,12 +1314,19 @@ def run_monte_carlo_simulation(
         if home_score > away_score:
             wins[:, home_index] += 1
             points[:, home_index] += 3
+            if round_points_delta is not None and rnd is not None and rnd <= max_round:
+                round_points_delta[:, home_index, rnd] += 3
         elif away_score > home_score:
             wins[:, away_index] += 1
             points[:, away_index] += 3
+            if round_points_delta is not None and rnd is not None and rnd <= max_round:
+                round_points_delta[:, away_index, rnd] += 3
         else:
             points[:, home_index] += 1
             points[:, away_index] += 1
+            if round_points_delta is not None and rnd is not None and rnd <= max_round:
+                round_points_delta[:, home_index, rnd] += 1
+                round_points_delta[:, away_index, rnd] += 1
 
     rng = np.random.default_rng(_MONTE_CARLO_RANDOM_SEED)
     if remaining_matches:
@@ -1308,6 +1342,7 @@ def run_monte_carlo_simulation(
         for match_index, match in enumerate(remaining_matches):
             home_index = team_indices[match["thuis"]]
             away_index = team_indices[match["uit"]]
+            rnd = match.get("ronde")
             home_scores = simulated_home_scores[:, match_index]
             away_scores = simulated_away_scores[:, match_index]
             goals_for[:, home_index] += home_scores
@@ -1318,14 +1353,19 @@ def run_monte_carlo_simulation(
             away_wins = away_scores > home_scores
             wins[:, home_index] += home_wins
             wins[:, away_index] += away_wins
-            points[:, home_index] += np.where(home_wins, 3, home_scores == away_scores)
-            points[:, away_index] += np.where(away_wins, 3, home_scores == away_scores)
+            home_pts = np.where(home_wins, 3, home_scores == away_scores)
+            away_pts = np.where(away_wins, 3, home_scores == away_scores)
+            points[:, home_index] += home_pts
+            points[:, away_index] += away_pts
+            if round_points_delta is not None and rnd is not None and rnd <= max_round:
+                round_points_delta[:, home_index, rnd] += home_pts
+                round_points_delta[:, away_index, rnd] += away_pts
 
     goal_difference = goals_for - goals_against
     name_order = np.argsort([team_names[team].casefold() for team in teams])
     order = np.lexsort(
         (
-            np.broadcast_to(name_order, (n_simulations, len(teams))),
+            np.broadcast_to(name_order, (n_simulations, n_teams)),
             -goals_for,
             -goal_difference,
             -wins,
@@ -1334,7 +1374,7 @@ def run_monte_carlo_simulation(
         axis=1,
     )
     positions = np.empty_like(order, dtype=np.int16)
-    positions[np.arange(n_simulations)[:, None], order] = np.arange(1, len(teams) + 1)
+    positions[np.arange(n_simulations)[:, None], order] = np.arange(1, n_teams + 1)
     positions_by_team = {
         team: positions[:, index] for team, index in team_indices.items()
     }
@@ -1342,41 +1382,40 @@ def run_monte_carlo_simulation(
         team: points[:, index] for team, index in team_indices.items()
     }
 
-    n_teams = len(teams)
     rows = []
     for team in teams:
-        positions = positions_by_team[team]
+        team_pos = positions_by_team[team]
         rows.append(
             {
                 "Team": team_names[team],
                 "Kampioenschap (%)": (
-                    np.count_nonzero(positions == 1) / n_simulations * 100
+                    np.count_nonzero(team_pos == 1) / n_simulations * 100
                 ),
                 "Top 3 (%)": (
-                    np.count_nonzero(positions <= min(3, n_teams))
+                    np.count_nonzero(team_pos <= min(3, n_teams))
                     / n_simulations
                     * 100
                 ),
                 "Linkerrijtje (%)": (
-                    np.count_nonzero(positions <= min(6, n_teams))
+                    np.count_nonzero(team_pos <= min(6, n_teams))
                     / n_simulations
                     * 100
                 ),
                 "Degradatiekans (%)": (
-                    np.count_nonzero((positions == 10) | (positions == 11))
+                    np.count_nonzero((team_pos == 10) | (team_pos == 11))
                     / n_simulations
                     * 100
                 ),
-                "Gemiddelde Eindpositie": float(np.mean(positions)),
-                "Mediaan": float(np.median(positions)),
-                "10e Percentiel": float(np.percentile(positions, 10)),
-                "90e Percentiel": float(np.percentile(positions, 90)),
+                "Gemiddelde Eindpositie": float(np.mean(team_pos)),
+                "Mediaan": float(np.median(team_pos)),
+                "10e Percentiel": float(np.percentile(team_pos, 10)),
+                "90e Percentiel": float(np.percentile(team_pos, 90)),
                 "Verwachte Punten": float(
                     np.mean(points_by_team[team])
                 ),
                 **{
                     f"Plek {position} (%)": (
-                        np.count_nonzero(positions == position) / n_simulations * 100
+                        np.count_nonzero(team_pos == position) / n_simulations * 100
                     )
                     for position in range(1, n_teams + 1)
                 },
@@ -1415,6 +1454,53 @@ def run_monte_carlo_simulation(
             kind="stable",
         ).reset_index(drop=True)
 
+    # Puntenverloop per ronde + positiegrenzen voor alle posities (Plek 1 t/m n_teams)
+    trajectory_rows: list[dict[str, Any]] = []
+    threshold_rows: list[dict[str, Any]] = []
+    if round_points_delta is not None and max_round > 0 and n_teams > 0:
+        cum_points = np.cumsum(round_points_delta, axis=2)
+        for team_key in teams:
+            idx = team_indices[team_key]
+            team_label = team_names[team_key]
+            for rnd in range(0, max_round + 1):
+                arr = cum_points[:, idx, rnd]
+                trajectory_rows.append(
+                    {
+                        "Ronde": rnd,
+                        "Team": team_label,
+                        "Verwachte_Punten": float(np.mean(arr)),
+                        "Mediaan": float(np.median(arr)),
+                        "P10": float(np.percentile(arr, 10)),
+                        "P90": float(np.percentile(arr, 90)),
+                        "Is_Werkelijk": rnd <= max_played_round,
+                    }
+                )
+
+        for rnd in range(0, max_round + 1):
+            sorted_pts = np.sort(cum_points[:, :, rnd], axis=1)[:, ::-1]
+            row_thresh: dict[str, Any] = {
+                "Ronde": rnd,
+                "Is_Werkelijk": rnd <= max_played_round,
+            }
+            for pos_idx in range(n_teams):
+                row_thresh[f"Plek {pos_idx + 1}"] = float(np.mean(sorted_pts[:, pos_idx]))
+            threshold_rows.append(row_thresh)
+
+    trajectory_df = pd.DataFrame(
+        trajectory_rows,
+        columns=[
+            "Ronde",
+            "Team",
+            "Verwachte_Punten",
+            "Mediaan",
+            "P10",
+            "P90",
+            "Is_Werkelijk",
+        ],
+    )
+    threshold_cols = ["Ronde", "Is_Werkelijk"] + [f"Plek {i}" for i in range(1, n_teams + 1)]
+    thresholds_df = pd.DataFrame(threshold_rows, columns=threshold_cols)
+
     target_team = _team_key(_ESHG_TEAM)
     target_distribution = (
         pd.DataFrame(
@@ -1437,7 +1523,159 @@ def run_monte_carlo_simulation(
     return summary, {
         "team": _ESHG_TEAM,
         "positie_distributie": target_distribution,
+        "punten_verloop": trajectory_df,
+        "positie_grenzen": thresholds_df,
+        "max_played_round": max_played_round,
+        "max_round": max_round,
     }
+
+
+def calculate_monte_carlo_history(
+    matches: list[dict[str, Any]],
+    n_simulations: int = 1000,
+    model_type: str = "aangepast",
+) -> tuple[pd.DataFrame, dict[int, pd.DataFrame]]:
+    """Bereken hoe ESHG's Monte Carlo-kansen zijn geëvolueerd per gespeelde speelronde."""
+    played_rounds = sorted(
+        {
+            rnd
+            for m in matches
+            if _valid_played_score(m) is not None and (rnd := _round_int(m.get("ronde"))) is not None
+        }
+    )
+    if not played_rounds:
+        return pd.DataFrame(), {}
+
+    history_rows: list[dict[str, Any]] = []
+    snapshots_by_round: dict[int, pd.DataFrame] = {}
+
+    for cutoff_round in played_rounds:
+        masked_matches: list[dict[str, Any]] = []
+        for m in matches:
+            rnd = _round_int(m.get("ronde"))
+            if _valid_played_score(m) is not None and rnd is not None and rnd <= cutoff_round:
+                masked_matches.append(dict(m))
+            else:
+                masked_matches.append(
+                    {
+                        **m,
+                        "gespeeld": False,
+                        "score_thuis": None,
+                        "score_uit": None,
+                    }
+                )
+
+        summary_df, _ = run_monte_carlo_simulation(
+            masked_matches,
+            n_simulations=n_simulations,
+            model_type=model_type,
+        )
+        snapshots_by_round[cutoff_round] = summary_df
+
+        eshg_rows = summary_df.loc[summary_df["Team"] == _ESHG_TEAM]
+        if not eshg_rows.empty:
+            row = eshg_rows.iloc[0]
+            history_rows.append(
+                {
+                    "Ronde": cutoff_round,
+                    "Kampioenschap (%)": float(row["Kampioenschap (%)"]),
+                    "Top 3 (%)": float(row["Top 3 (%)"]),
+                    "Linkerrijtje (%)": float(row["Linkerrijtje (%)"]),
+                    "Degradatiekans (%)": float(row["Degradatiekans (%)"]),
+                    "Verwachte Eindpositie": float(row["Gemiddelde Eindpositie"]),
+                    "Verwachte Punten": float(row["Verwachte Punten"]),
+                }
+            )
+
+    return pd.DataFrame(history_rows), snapshots_by_round
+
+
+def calculate_next_match_impact(
+    matches: list[dict[str, Any]],
+    n_simulations: int = 1000,
+    model_type: str = "aangepast",
+) -> tuple[dict[str, Any] | None, pd.DataFrame]:
+    """Bereken hoe Winst, Gelijk of Verlies in het eerstvolgende ESHG-duel de eindkansen beïnvloedt."""
+    upcoming_eshg = [
+        m
+        for m in matches
+        if m.get("gespeeld") is False
+        and _team_key(_ESHG_TEAM)
+        in (_team_key(str(m.get("thuis", ""))), _team_key(str(m.get("uit", ""))))
+    ]
+    if not upcoming_eshg:
+        return None, pd.DataFrame()
+
+    upcoming_eshg.sort(
+        key=lambda m: (_round_int(m.get("ronde")) or 999, _normalize_date(m.get("datum")))
+    )
+    next_match = upcoming_eshg[0]
+    is_home = _team_key(str(next_match.get("thuis", ""))) == _team_key(_ESHG_TEAM)
+    opponent = str(next_match["uit"] if is_home else next_match["thuis"]).strip()
+    rnd = _round_int(next_match.get("ronde"))
+    datum = _normalize_date(next_match.get("datum"))
+
+    scenarios = [
+        ("Winst ESHG (+3 pt)", (3, 1) if is_home else (1, 3)),
+        ("Gelijkspel (+1 pt)", (2, 2)),
+        ("Verlies ESHG (+0 pt)", (1, 3) if is_home else (3, 1)),
+    ]
+
+    rows: list[dict[str, Any]] = []
+    target_id = str(next_match.get("match_id", "")).strip()
+
+    for label, (s_thuis, s_uit) in scenarios:
+        modified: list[dict[str, Any]] = []
+        applied = False
+        for m in matches:
+            same_id = target_id and str(m.get("match_id", "")).strip() == target_id
+            same_fixture = (
+                not target_id
+                and m.get("gespeeld") is False
+                and _team_key(str(m.get("thuis", ""))) == _team_key(str(next_match.get("thuis", "")))
+                and _team_key(str(m.get("uit", ""))) == _team_key(str(next_match.get("uit", "")))
+                and _round_int(m.get("ronde")) == rnd
+            )
+            if not applied and (same_id or same_fixture):
+                modified.append(
+                    {
+                        **m,
+                        "gespeeld": True,
+                        "score_thuis": s_thuis,
+                        "score_uit": s_uit,
+                    }
+                )
+                applied = True
+            else:
+                modified.append(m)
+
+        summary_df, _ = run_monte_carlo_simulation(
+            modified,
+            n_simulations=n_simulations,
+            model_type=model_type,
+        )
+        eshg_row = summary_df.loc[summary_df["Team"] == _ESHG_TEAM]
+        if not eshg_row.empty:
+            r = eshg_row.iloc[0]
+            rows.append(
+                {
+                    "Scenario": label,
+                    "Verw. Positie": float(r["Gemiddelde Eindpositie"]),
+                    "Verw. Punten": float(r["Verwachte Punten"]),
+                    "Kampioenschap (%)": float(r["Kampioenschap (%)"]),
+                    "Top 3 (%)": float(r["Top 3 (%)"]),
+                    "Linkerrijtje (%)": float(r["Linkerrijtje (%)"]),
+                    "Degradatiekans (%)": float(r["Degradatiekans (%)"]),
+                }
+            )
+
+    meta = {
+        "ronde": rnd,
+        "datum": datum,
+        "tegenstander": opponent,
+        "locatie": "Thuis" if is_home else "Uit",
+    }
+    return meta, pd.DataFrame(rows)
 
 
 def simulate_standings(simulated_matches: list[dict[str, Any]]) -> pd.DataFrame:
@@ -1521,11 +1759,8 @@ def simulate_scenario_horizon(
         hist_goals_against.setdefault(home_key, [])
         hist_goals_against.setdefault(away_key, [])
 
-        raw_round = match.get("ronde")
-        try:
-            rnd = int(raw_round) if raw_round is not None and not isinstance(raw_round, bool) else 999
-        except (TypeError, ValueError):
-            rnd = 999
+        rnd_val = _round_int(match.get("ronde"))
+        rnd = rnd_val if rnd_val is not None else 999
 
         scores = _valid_played_score(match)
         if scores is not None:
@@ -1558,7 +1793,6 @@ def simulate_scenario_horizon(
             else:
                 horizon_simulated_matches.append({"thuis": home_key, "uit": away_key})
 
-    # ELO + Bayesian shrunk aanval/verdediging op basis van werkelijk gespeelde wedstrijden
     elo_df = calculate_elo_ratings(matches)
     elo_dict = {
         _team_key(str(row["Team"])): float(row["ELO Rating"])
