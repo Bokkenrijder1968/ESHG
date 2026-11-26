@@ -19,13 +19,13 @@ _PLAYER_STAT_COLUMNS = [
     "Positie",
     "Speler",
     "GS",
-    "Punten",
     "Goals",
+    "Assists",
+    "Totaal_G_A",
     "Veldgoals",
     "Strafcorners",
     "Strafballen",
-    "Assists",
-    "Totaal_G_A",
+    "Punten",
     "Kaarten",
 ]
 

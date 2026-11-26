@@ -1076,17 +1076,22 @@
         0
       ]
     },
-    "corners_bijgehouden": false,
-    "corners": null,
+    "corners_bijgehouden": true,
+    "corners": {
+      "voor_totaal": 8,
+      "voor_gescoord": 0,
+      "tegen_totaal": 0,
+      "tegen_gescoord": 0
+    },
     "goals": [
       {
         "maker": "Tibbe",
-        "assist": "Menno",
+        "assist": null,
         "type": "Veldgoal"
       },
       {
-        "maker": "Eigen doelpunt tegenstander",
-        "assist": "Maarten",
+        "maker": "Padt",
+        "assist": "Menno",
         "type": "Veldgoal"
       }
     ],

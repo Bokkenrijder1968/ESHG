@@ -1,4 +1,4 @@
-ENABLE_PITCHERS = True
+ENABLE_PITCHERS = False
 
 OPPONENTS = [
     "Den Bosch H5",
